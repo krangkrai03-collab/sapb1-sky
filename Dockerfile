@@ -11,7 +11,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Remove every enabled MPM symlink first, then enable exactly prefork — this
 # guarantees a single MPM (fixes "AH00534: More than one MPM loaded").
 RUN rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf \
-    && a2enmod mpm_prefork rewrite
+    && a2enmod mpm_prefork rewrite headers
+COPY docker/security-headers.conf /etc/apache2/conf-enabled/security-headers.conf
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
     && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf \

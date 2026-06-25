@@ -11,7 +11,7 @@ $routes->get('locale/(:segment)', 'Locale::set/$1');
 
 // Custom login (single field: username OR email).
 $routes->get('login', '\App\Controllers\Auth\LoginController::loginView', ['as' => 'login']);
-$routes->post('login', '\App\Controllers\Auth\LoginController::loginAction');
+$routes->post('login', '\App\Controllers\Auth\LoginController::loginAction', ['filter' => 'auth-rates']);
 
 // Protected admin area — every route requires an authenticated session
 // with the 'admin.access' permission.

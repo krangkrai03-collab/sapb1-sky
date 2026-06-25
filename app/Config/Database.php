@@ -205,6 +205,11 @@ class Database extends Config
         // names with dots may not be readable, so build the connection from
         // plain-named vars: MYSQL_URL first, else MYSQL{HOST,PORT,...}.
         $this->applyPlatformDatabase();
+
+        // Never surface raw DB errors in production.
+        if (ENVIRONMENT === 'production') {
+            $this->default['DBDebug'] = false;
+        }
     }
 
     /**

@@ -66,6 +66,9 @@ class Warehouses extends BaseController
             return redirect()->to('warehouses')->with('error', lang('App.syncNoEndpoint', [$company, self::SYNC_ENDPOINT]));
         }
         $url = rtrim($baseUrl, '/') . '/' . ltrim($endpoint->path, '/');
+        if (! sync_url_is_safe($url)) {
+            return redirect()->to('warehouses')->with('error', lang('App.syncUnsafeUrl'));
+        }
 
         $options = ['timeout' => 10, 'http_errors' => false];
         $apiKey  = (string) branding('apiKey' . ucfirst(strtolower($company)), '');

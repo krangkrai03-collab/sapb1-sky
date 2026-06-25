@@ -104,4 +104,14 @@ class Cookie extends BaseConfig
      * @see https://tools.ietf.org/html/rfc2616#section-2.2
      */
     public bool $raw = false;
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        // Only send cookies over HTTPS in production (prevents leakage / MITM).
+        if (ENVIRONMENT === 'production') {
+            $this->secure = true;
+        }
+    }
 }

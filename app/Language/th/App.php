@@ -196,6 +196,7 @@ return [
     'syncFromSap'      => 'Sync Data From SAP',
     'syncNoUrl'        => 'ยังไม่ได้ตั้งค่า URL Web API ของ [{0}] (ตั้งที่หน้าตั้งค่าระบบ)',
     'syncNoEndpoint'   => 'ยังไม่ได้ตั้งค่า endpoint "{1}" ของ [{0}] (เพิ่มที่หน้าตั้งค่าระบบ)',
+    'syncUnsafeUrl'    => 'URL ปลายทางไม่ปลอดภัย (ต้องเป็น http/https และไม่ชี้ไปยังเครือข่ายภายใน)',
     'syncDone'         => 'ซิงก์ [{0}] จาก SAP สำเร็จ: เพิ่ม {1} รายการ',
     'syncFailed'       => 'ซิงก์ [{0}] จาก SAP ไม่สำเร็จ — ตรวจสอบ URL Web API/การเชื่อมต่อ',
 

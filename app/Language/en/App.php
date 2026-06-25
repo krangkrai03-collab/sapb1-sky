@@ -196,6 +196,7 @@ return [
     'syncFromSap'      => 'Sync Data From SAP',
     'syncNoUrl'        => 'Web API URL for [{0}] is not set (configure it in System Settings)',
     'syncNoEndpoint'   => 'The "{1}" endpoint for [{0}] is not configured (add it in System Settings)',
+    'syncUnsafeUrl'    => 'Target URL is not allowed (must be http/https and not point to an internal network)',
     'syncDone'         => 'Synced [{0}] from SAP: {1} added',
     'syncFailed'       => 'Sync [{0}] from SAP failed — check the Web API URL/connection',
 

@@ -106,6 +106,48 @@ if (! function_exists('local_datetime')) {
     }
 }
 
+if (! function_exists('sync_url_is_safe')) {
+    /**
+     * SSRF guard for outbound sync requests: allow only http(s) to a host that
+     * resolves to public IPs (blocks localhost, private ranges and cloud
+     * metadata like 169.254.169.254).
+     */
+    function sync_url_is_safe(string $url): bool
+    {
+        $parts = parse_url($url);
+        if ($parts === false || empty($parts['scheme']) || empty($parts['host'])) {
+            return false;
+        }
+        if (! in_array(strtolower($parts['scheme']), ['http', 'https'], true)) {
+            return false;
+        }
+
+        $host = $parts['host'];
+        $ips  = [];
+        if (filter_var($host, FILTER_VALIDATE_IP)) {
+            $ips[] = $host;
+        } else {
+            foreach (@dns_get_record($host, DNS_A + DNS_AAAA) ?: [] as $r) {
+                $ips[] = $r['ip'] ?? $r['ipv6'] ?? null;
+            }
+            if ($ips === [] && ($v4 = gethostbynamel($host)) !== false) {
+                $ips = $v4;
+            }
+        }
+        if ($ips === []) {
+            return false; // unresolved -> treat as unsafe
+        }
+
+        foreach ($ips as $ip) {
+            if ($ip === null || ! filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                return false; // private or reserved range
+            }
+        }
+
+        return true;
+    }
+}
+
 if (! function_exists('user_can')) {
     /**
      * Null-safe permission check for the current user.
