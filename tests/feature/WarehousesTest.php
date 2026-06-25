@@ -57,27 +57,20 @@ final class WarehousesTest extends CIUnitTestCase
         $this->actingAs($viewer)->get('warehouses')->assertStatus(403);
     }
 
-    public function testSyncUnknownCompanyReturns404(): void
-    {
-        $admin = $this->makeUser('admin', 'superadmin');
-        $this->expectException(\CodeIgniter\Exceptions\PageNotFoundException::class);
-        $this->actingAs($admin)->post('warehouses/sync/NOPE');
-    }
-
     public function testSyncWithoutApiUrlRedirectsAndAddsNothing(): void
     {
         $admin = $this->makeUser('admin', 'superadmin');
-        $this->actingAs($admin)->post('warehouses/sync/SKY')->assertRedirect();
+        $this->actingAs($admin)->post('warehouses/sync')->assertRedirect();
 
-        $this->assertSame(0, (new WarehouseModel())->where('company', 'SKY')->countAllResults());
+        $this->assertSame(0, (new WarehouseModel())->countAllResults());
     }
 
     public function testSyncWithUrlButNoEndpointRedirects(): void
     {
-        service('settings')->set('Branding.apiUrlSky', 'https://example.test');
+        service('settings')->set('Branding.apiUrl', 'https://example.test');
         $admin = $this->makeUser('admin', 'superadmin');
-        $this->actingAs($admin)->post('warehouses/sync/SKY')->assertRedirect();
+        $this->actingAs($admin)->post('warehouses/sync')->assertRedirect();
 
-        $this->assertSame(0, (new WarehouseModel())->where('company', 'SKY')->countAllResults());
+        $this->assertSame(0, (new WarehouseModel())->countAllResults());
     }
 }

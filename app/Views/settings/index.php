@@ -121,20 +121,12 @@
 					<hr>
 					<h5 class="mb-3"><i class="fas fa-plug me-1"></i> <?= lang('App.apiSection') ?></h5>
 					<div class="mb-3">
-						<label class="form-label"><span class="badge text-bg-info me-1">SKY</span> <?= lang('App.apiUrlSky') ?></label>
-						<input type="url" name="api_url_sky" class="form-control" value="<?= esc(old('api_url_sky', branding('apiUrlSky'))) ?>" placeholder="https://api.sky.example.com">
+						<label class="form-label"><?= lang('App.apiUrl') ?></label>
+						<input type="url" name="api_url" class="form-control" value="<?= esc(old('api_url', branding('apiUrl'))) ?>" placeholder="https://api.example.com">
 					</div>
 					<div class="mb-3">
-						<label class="form-label"><span class="badge text-bg-info me-1">SKY</span> <?= lang('App.apiKeySky') ?></label>
-						<input type="text" name="api_key_sky" class="form-control" value="<?= esc(old('api_key_sky', branding('apiKeySky'))) ?>" placeholder="<?= esc(lang('App.apiKeyPlaceholder'), 'attr') ?>" autocomplete="off">
-					</div>
-					<div class="mb-3">
-						<label class="form-label"><span class="badge text-bg-warning me-1">Jojo</span> <?= lang('App.apiUrlJojo') ?></label>
-						<input type="url" name="api_url_jojo" class="form-control" value="<?= esc(old('api_url_jojo', branding('apiUrlJojo'))) ?>" placeholder="https://api.jojo.example.com">
-					</div>
-					<div class="mb-3">
-						<label class="form-label"><span class="badge text-bg-warning me-1">Jojo</span> <?= lang('App.apiKeyJojo') ?></label>
-						<input type="text" name="api_key_jojo" class="form-control" value="<?= esc(old('api_key_jojo', branding('apiKeyJojo'))) ?>" placeholder="<?= esc(lang('App.apiKeyPlaceholder'), 'attr') ?>" autocomplete="off">
+						<label class="form-label"><?= lang('App.apiKey') ?></label>
+						<input type="text" name="api_key" class="form-control" value="<?= esc(old('api_key', branding('apiKey'))) ?>" placeholder="<?= esc(lang('App.apiKeyPlaceholder'), 'attr') ?>" autocomplete="off">
 					</div>
 				</div>
 				<div class="card-footer">
@@ -144,47 +136,33 @@
 			</div>
 		</form>
 
-		<?php $epTheme = ['SKY' => 'info', 'JOJO' => 'warning']; $epLabel = ['SKY' => 'SKY', 'JOJO' => 'Jojo']; ?>
 		<div class="card mt-3">
-			<div class="card-header"><h3 class="card-title"><i class="fas fa-sitemap me-1"></i> <?= lang('App.endpointSection') ?></h3></div>
+			<div class="card-header d-flex justify-content-between align-items-center">
+				<h3 class="card-title mb-0"><i class="fas fa-sitemap me-1"></i> <?= lang('App.endpointSection') ?></h3>
+				<span class="badge text-bg-light"><?= count($endpoints) ?></span>
+			</div>
 			<div class="card-body">
 				<small class="text-body-secondary d-block mb-3"><?= lang('App.endpointHint') ?></small>
-				<div class="row g-3">
-					<?php foreach ($apiCompanies as $ac): ?>
-						<?php $theme = $epTheme[$ac] ?? 'secondary'; $list = $endpoints[$ac] ?? []; ?>
-						<div class="col-md-6">
-							<div class="card h-100">
-								<div class="card-header text-bg-<?= esc($theme, 'attr') ?> d-flex justify-content-between align-items-center">
-									<h3 class="card-title mb-0"><i class="fas fa-plug me-1"></i> <?= esc($epLabel[$ac] ?? $ac) ?></h3>
-									<span class="badge text-bg-light"><?= count($list) ?></span>
-								</div>
-								<ul class="list-group list-group-flush">
-									<?php if (empty($list)): ?>
-										<li class="list-group-item text-center text-body-secondary py-3"><?= lang('App.noEndpoints') ?></li>
-									<?php else: foreach ($list as $e): ?>
-										<li class="list-group-item d-flex justify-content-between align-items-center">
-											<span><span class="badge text-bg-<?= ($e->method ?? 'GET') === 'POST' ? 'success' : 'secondary' ?> me-1"><?= esc($e->method ?? 'GET') ?></span><strong><?= esc($e->name) ?></strong> <code class="ms-1"><?= esc($e->path) ?></code></span>
-											<form action="<?= site_url('api-endpoints/delete/' . $e->id) ?>" method="post" onsubmit="return confirm('<?= esc(lang('App.confirmDelete'), 'js') ?>');">
-												<?= csrf_field() ?>
-												<button type="submit" class="btn btn-sm btn-outline-danger" title="<?= esc(lang('App.delete'), 'attr') ?>"><i class="fas fa-trash"></i></button>
-											</form>
-										</li>
-									<?php endforeach; endif; ?>
-								</ul>
-								<div class="card-footer">
-									<form action="<?= site_url('api-endpoints/create') ?>" method="post" class="row g-2">
-										<?= csrf_field() ?>
-										<input type="hidden" name="company" value="<?= esc($ac, 'attr') ?>">
-										<div class="col-12"><input type="text" name="name" class="form-control form-control-sm" placeholder="<?= esc(lang('App.endpointName'), 'attr') ?> (ItemMaster)" maxlength="100" required></div>
-										<div class="col-4"><select name="method" class="form-select form-select-sm"><option value="GET">GET</option><option value="POST">POST</option></select></div>
-										<div class="col-8"><input type="text" name="path" class="form-control form-control-sm" placeholder="<?= esc(lang('App.endpointPath'), 'attr') ?> (/item)" maxlength="255" required></div>
-										<div class="col-12 d-grid"><button type="submit" class="btn btn-sm btn-<?= esc($theme, 'attr') ?>"><i class="fas fa-plus me-1"></i> <?= lang('App.add') ?></button></div>
-									</form>
-								</div>
-							</div>
-						</div>
-					<?php endforeach; ?>
-				</div>
+				<ul class="list-group list-group-flush mb-3">
+					<?php if (empty($endpoints)): ?>
+						<li class="list-group-item text-center text-body-secondary py-3"><?= lang('App.noEndpoints') ?></li>
+					<?php else: foreach ($endpoints as $e): ?>
+						<li class="list-group-item d-flex justify-content-between align-items-center">
+							<span><span class="badge text-bg-<?= ($e->method ?? 'GET') === 'POST' ? 'success' : 'secondary' ?> me-1"><?= esc($e->method ?? 'GET') ?></span><strong><?= esc($e->name) ?></strong> <code class="ms-1"><?= esc($e->path) ?></code></span>
+							<form action="<?= site_url('api-endpoints/delete/' . $e->id) ?>" method="post" onsubmit="return confirm('<?= esc(lang('App.confirmDelete'), 'js') ?>');">
+								<?= csrf_field() ?>
+								<button type="submit" class="btn btn-sm btn-outline-danger" title="<?= esc(lang('App.delete'), 'attr') ?>"><i class="fas fa-trash"></i></button>
+							</form>
+						</li>
+					<?php endforeach; endif; ?>
+				</ul>
+				<form action="<?= site_url('api-endpoints/create') ?>" method="post" class="row g-2">
+					<?= csrf_field() ?>
+					<div class="col-md-4"><input type="text" name="name" class="form-control form-control-sm" placeholder="<?= esc(lang('App.endpointName'), 'attr') ?> (ItemMaster)" maxlength="100" required></div>
+					<div class="col-md-2"><select name="method" class="form-select form-select-sm"><option value="GET">GET</option><option value="POST">POST</option></select></div>
+					<div class="col-md-4"><input type="text" name="path" class="form-control form-control-sm" placeholder="<?= esc(lang('App.endpointPath'), 'attr') ?> (/item)" maxlength="255" required></div>
+					<div class="col-md-2 d-grid"><button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-plus me-1"></i> <?= lang('App.add') ?></button></div>
+				</form>
 			</div>
 		</div>
 	</div>

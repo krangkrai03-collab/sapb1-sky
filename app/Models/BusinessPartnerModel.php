@@ -10,5 +10,5 @@ class BusinessPartnerModel extends Model
     protected $primaryKey    = 'id';
     protected $returnType    = 'object';
     protected $useTimestamps = false;
-    protected $allowedFields = ['company', 'bp_code', 'bp_name', 'ship_to', 'created_at'];
+    protected $allowedFields = ['bp_code', 'bp_name', 'ship_to', 'created_at'];
 }

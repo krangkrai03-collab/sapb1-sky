@@ -59,7 +59,7 @@ final class BusinessPartnersTest extends CIUnitTestCase
 
     public function testPartnersShowOnPage(): void
     {
-        (new BusinessPartnerModel())->insert(['company' => 'JOJO', 'bp_code' => 'BP-9', 'bp_name' => 'ACME Co', 'ship_to' => 'Bangkok']);
+        (new BusinessPartnerModel())->insert(['bp_code' => 'BP-9', 'bp_name' => 'ACME Co', 'ship_to' => 'Bangkok']);
         $admin  = $this->makeUser('admin', 'superadmin');
         $result = $this->actingAs($admin)->get('business-partners');
         $result->assertSee('BP-9');
@@ -69,14 +69,7 @@ final class BusinessPartnersTest extends CIUnitTestCase
     public function testSyncWithoutApiUrlRedirects(): void
     {
         $admin = $this->makeUser('admin', 'superadmin');
-        $this->actingAs($admin)->post('business-partners/sync/SKY')->assertRedirect();
-        $this->assertSame(0, (new BusinessPartnerModel())->where('company', 'SKY')->countAllResults());
-    }
-
-    public function testSyncUnknownCompany404(): void
-    {
-        $admin = $this->makeUser('admin', 'superadmin');
-        $this->expectException(\CodeIgniter\Exceptions\PageNotFoundException::class);
-        $this->actingAs($admin)->post('business-partners/sync/ZZ');
+        $this->actingAs($admin)->post('business-partners/sync')->assertRedirect();
+        $this->assertSame(0, (new BusinessPartnerModel())->countAllResults());
     }
 }

@@ -18,7 +18,6 @@ class UserModel extends ShieldUserModel
             'name',
             'avatar',
             'locale',
-            'company',
         ]);
     }
 }

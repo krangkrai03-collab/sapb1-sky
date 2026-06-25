@@ -21,44 +21,32 @@ final class TransferRequestModelTest extends CIUnitTestCase
     private function seed(string $docNo): void
     {
         (new TransferRequestModel())->insert([
-            'doc_no'  => $docNo,
-            'company' => 'SKY',
-            'status'  => 'Open',
+            'doc_no' => $docNo,
+            'status' => 'Open',
         ]);
     }
 
-    public function testFirstNumberPerCompanyMonth(): void
+    public function testFirstNumberOfMonth(): void
     {
         $m = new TransferRequestModel();
-        $this->assertSame('ITRS26060001', $m->nextDocNo('SKY', '2606'));
-        $this->assertSame('ITRJ26060001', $m->nextDocNo('JOJO', '2606'));
+        $this->assertSame('ITR26060001', $m->nextDocNo('2606'));
     }
 
-    public function testRunningIncrementsWithinCompany(): void
+    public function testRunningIncrements(): void
     {
-        $this->seed('ITRS26060001');
-        $this->seed('ITRS26060002');
+        $this->seed('ITR26060001');
+        $this->seed('ITR26060002');
 
         $m = new TransferRequestModel();
-        $this->assertSame('ITRS26060003', $m->nextDocNo('SKY', '2606'));
-    }
-
-    public function testCompaniesHaveSeparateSequences(): void
-    {
-        $this->seed('ITRS26060001');
-        $this->seed('ITRS26060002');
-
-        $m = new TransferRequestModel();
-        // JOJO is untouched by SKY documents.
-        $this->assertSame('ITRJ26060001', $m->nextDocNo('JOJO', '2606'));
+        $this->assertSame('ITR26060003', $m->nextDocNo('2606'));
     }
 
     public function testMonthsHaveSeparateSequences(): void
     {
-        $this->seed('ITRS26060001');
+        $this->seed('ITR26060001');
 
         $m = new TransferRequestModel();
         // A different month restarts at 1.
-        $this->assertSame('ITRS26050001', $m->nextDocNo('SKY', '2605'));
+        $this->assertSame('ITR26050001', $m->nextDocNo('2605'));
     }
 }

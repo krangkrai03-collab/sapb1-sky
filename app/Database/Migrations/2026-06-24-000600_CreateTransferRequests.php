@@ -12,7 +12,6 @@ class CreateTransferRequests extends Migration
         $this->forge->addField([
             'id'               => ['type' => 'INT', 'constraint' => 11, 'unsigned' => true, 'auto_increment' => true],
             'doc_no'           => ['type' => 'VARCHAR', 'constraint' => 30],
-            'company'          => ['type' => 'VARCHAR', 'constraint' => 20],
             'status'           => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'Open'],
             'business_partner' => ['type' => 'VARCHAR', 'constraint' => 150, 'null' => true],
             'name'             => ['type' => 'VARCHAR', 'constraint' => 150, 'null' => true],
@@ -32,7 +31,6 @@ class CreateTransferRequests extends Migration
         ]);
         $this->forge->addKey('id', true);
         $this->forge->addUniqueKey('doc_no');
-        $this->forge->addKey('company');
         $this->forge->createTable('transfer_requests');
 
         // Line items

@@ -12,22 +12,21 @@ authentication/RBAC และธีม **AdminLTE 4** (Bootstrap 5, ไม่ใ
 ### พื้นฐาน (port จาก CI3)
 - 🔐 **Auth + RBAC** ด้วย Shield — login ด้วย **ชื่อผู้ใช้หรืออีเมล** (ช่องเดียว), throttle, remember-me
 - 📊 **Dashboard** — สถิติผู้ใช้/กลุ่ม (การ์ดสูงเท่ากันด้วย flexbox)
-- 👥 **จัดการผู้ใช้** — CRUD + กลุ่มสิทธิ์ + ระงับ (ban) + **บริษัท (ALL/Company 1/Company 2)** + **ผูกคลังสินค้า** + avatar
+- 👥 **จัดการผู้ใช้** — CRUD + กลุ่มสิทธิ์ + ระงับ (ban) + **ผูกคลังสินค้า** + avatar
 - 🛡️ **บทบาท/สิทธิ์ (ไดนามิก)** — สร้าง/แก้/ลบบทบาท + ติ๊กสิทธิ์ผ่านเว็บ เก็บใน DB (Shield groups + matrix)
-- ⚙️ **ตั้งค่าระบบ** — แบรนด์/ธีม/พื้นหลัง login + **URL & API Key ของ Web API** + **endpoint ย่อยต่อบริษัท**
+- ⚙️ **ตั้งค่าระบบ** — แบรนด์/ธีม/พื้นหลัง login + **URL & API Key ของ Web API** + **endpoint ย่อย**
 - 👤 **โปรไฟล์** — แก้ข้อมูลตัวเอง + เปลี่ยนรหัสผ่าน + **เลือก avatar เป็นไอคอนสี** (5 แบบ)
 - 📜 **Activity log** — บันทึก login/logout/CRUD/sync ผ่าน Shield events (`/logs`) — แบ่งหน้า 20/หน้า, แสดงเวลาแบบ **Asia/Bangkok**
 - 🌐 **หลายภาษา (ไทย/English)** — แปลทั้งแอป; ภาษา **จำติดตัวผู้ใช้ (per-user)** สลับที่ navbar/โปรไฟล์
 - 🔒 **Hardening** — CSRF, security headers (CSP ฯลฯ), หน้า 403, เมนู/route ตามสิทธิ์
 
 ### โมดูล SAP (เพิ่มใหม่)
-- 🏢 **แยกข้อมูลตามบริษัท** — `Company 1` และ `Company 2` แยกขาดจากกันในทุกโมดูล
-- 📦 **Master data sync จาก SAP** — ปุ่ม **Sync Data From SAP** ต่อบริษัท ดึงข้อมูลผ่าน Web API แล้ว upsert:
-  - **Item Master** (`/items`) — Itemcode / Itemname / Default Warehouse
+- 📦 **Master data sync จาก SAP** — ปุ่ม **Sync Data From SAP** ดึงข้อมูลผ่าน Web API แล้ว upsert:
+  - **Item Master** (`/items`) — Itemcode / Itemname / Default Warehouse / **หน่วยนับหลายหน่วย (UoM)**
   - **Warehouses** (`/warehouses`) — Warehouse Code / Warehouse Name
   - **Business Partner** (`/business-partners`) — BP Code / BP Name / Ship To
 - 🔁 **Inventory Transfer Request** (`/transfer-requests`) — เอกสารคำขอโอนย้ายสินค้าแบบ SAP:
-  header (คู่ค้า/วันที่/คลังต้นทาง→ปลายทาง) + รายการสินค้าหลายบรรทัด, เลขที่เอกสารรันอัตโนมัติแยกตามบริษัท/เดือน
+  header (คู่ค้า/วันที่/คลังต้นทาง→ปลายทาง) + รายการสินค้าหลายบรรทัด, เลขที่เอกสารรันอัตโนมัติแยกตามเดือน
 
 ## ความต้องการของระบบ
 
@@ -94,38 +93,35 @@ php spark serve --port 8081
 
 ## โมดูล SAP
 
-### บริษัท (Company)
-ข้อมูลหลักและเอกสารถูกแยกตามบริษัท **`Company 1`** และ **`Company 2`** ตลอด — ส่วนผู้ใช้มีค่า `ALL/Company 1/Company 2`
-(ผู้ใช้ที่เป็น `ALL` เข้าถึง/ผูกได้ทั้งสองบริษัท)
-
 ### ตั้งค่า Web API (หน้า Settings)
-ต่อบริษัทแยกกัน เก็บผ่าน `codeigniter4/settings`:
-- **Web API URL** — base URL ของ SAP gateway (`Branding.apiUrlSky` / `apiUrlJojo`)
-- **API Key** — ส่งเป็น header `X-API-Key` ตอน sync (`Branding.apiKeySky` / `apiKeyJojo`)
+เก็บผ่าน `codeigniter4/settings`:
+- **Web API URL** — base URL ของ SAP gateway (`Branding.apiUrl`)
+- **API Key** — ส่งเป็น header `X-API-Key` ตอน sync (`Branding.apiKey`)
 - **Endpoint ย่อย** (ตาราง `api_endpoints`) — กำหนด path ต่อการทำงาน เช่น `ItemMaster → /item`,
-  `Warehouses → /warehouses`, `BusinessPartner → /business-partners` (เพิ่ม/ลบได้, กันชื่อซ้ำในบริษัทเดียวกัน)
+  `Warehouses → /warehouses`, `BusinessPartner → /business-partners` (เพิ่ม/ลบได้, กันชื่อซ้ำ)
 
 ### Sync จาก SAP
-แต่ละหน้า master data มีปุ่ม **Sync Data From SAP** ต่อบริษัท — เรียก `GET {apiUrl} + {endpoint path}`
+แต่ละหน้า master data มีปุ่ม **Sync Data From SAP** — เรียก `GET {apiUrl} + {endpoint path}`
 แนบ `X-API-Key` แล้ว upsert (มีอยู่→update, ไม่มี→insert) คาดหวัง response เป็น JSON array of objects
 (รองรับชื่อ key หลายแบบ รวม SAP B1 style เช่น `CardCode`/`CardName`)
 
 | โมดูล | endpoint name | คอลัมน์ | key ธรรมชาติ |
 |-------|---------------|---------|--------------|
-| Warehouses | `Warehouses` | code, name | (company, code) |
-| Item Master | `ItemMaster` | item_code, item_name, default_warehouse | (company, item_code) |
-| Business Partner | `BusinessPartner` | bp_code, bp_name, ship_to | (company, bp_code) |
+| Warehouses | `Warehouses` | code, name | code |
+| Item Master | `ItemMaster` | item_code, item_name, default_warehouse, **uoms[]** | item_code |
+| Business Partner | `BusinessPartner` | bp_code, bp_name, ship_to | bp_code |
 
-> ถ้ายังไม่ตั้ง URL หรือ endpoint ของบริษัทนั้น ปุ่ม Sync จะแจ้ง error ชัดเจน
+> Item Master รองรับ `DefaultWhs` และ `Uoms[]` (หลายหน่วยนับต่อสินค้า) — เก็บหน่วยฐานที่ `items.inventory_uom` และหน่วยอื่นในตาราง `item_uoms`
+> ถ้ายังไม่ตั้ง URL หรือ endpoint ปุ่ม Sync จะแจ้ง error ชัดเจน
 
 ### Inventory Transfer Request (`/transfer-requests`)
 เอกสารคำขอโอนย้ายสินค้าแนว SAP — **header + line items**:
-- **Header:** เลขที่เอกสาร (auto), Company, Business Partner/Name/Contact/Ship To, Posting/Due/Document Date,
+- **Header:** เลขที่เอกสาร (auto), Business Partner/Name/Contact/Ship To, Posting/Due/Document Date,
   From/To Warehouse, Price List, Remarks
 - **Line items:** เลือกสินค้า (จาก Item Master) / คลังต้นทาง→ปลายทาง / จำนวน / UoM — เพิ่มได้หลายบรรทัด
-  (กรองตามบริษัทที่เลือก, บรรทัดแรกลบไม่ได้)
-- **เลขที่เอกสาร** รันแยกตามบริษัท+เดือน: `ITR` + อักษรบริษัท (`S`/`J`) + `yymm` + ลำดับ 4 หลัก
-  เช่น `ITRS26060001` (Company 1), `ITRJ26060001` (Company 2) — preview ตอนเปลี่ยน Company/Posting Date, รันจริงจาก DB ตอนบันทึก
+  (บรรทัดแรกลบไม่ได้)
+- **เลขที่เอกสาร** รันแยกตามเดือน: `ITR` + `yymm` + ลำดับ 4 หลัก
+  เช่น `ITR26060001` — preview ตอนเปลี่ยน Posting Date, รันจริงจาก DB ตอนบันทึก
 - **คอลัมน์ SAP Document** เตรียมไว้เก็บเลขเอกสารที่ตอบกลับจาก SAP (สำหรับ integration ขาส่ง)
 - **สิทธิ์เห็นข้อมูล:** admin (superadmin) เห็นทุกใบ + คอลัมน์ *Created By*; ผู้ใช้อื่นเห็นเฉพาะของตัวเอง
 - รายการเกิน 20 ใบ → แบ่งหน้า
@@ -155,13 +151,13 @@ app/
 ├── Helpers/ui_helper.php   # branding(), theme_*/sidebar_*(), avatar_icon/color(),
 │                           # local_datetime(), user_can(), log_activity()
 ├── Models/
-│   ├── UserModel.php (name/avatar/locale/company) ActivityLogModel.php UserWarehouseModel.php
-│   ├── WarehouseModel.php ItemModel.php BusinessPartnerModel.php
+│   ├── UserModel.php (name/avatar/locale) ActivityLogModel.php UserWarehouseModel.php
+│   ├── WarehouseModel.php ItemModel.php ItemUomModel.php BusinessPartnerModel.php
 │   ├── ApiEndpointModel.php
 │   └── TransferRequestModel.php TransferRequestItemModel.php
-├── Database/Migrations/    # name/avatar/locale/company, activity_logs, warehouses,
-│                           # items, business_partners, api_endpoints, user_warehouses,
-│                           # transfer_requests (+items)
+├── Database/Migrations/    # name/avatar/locale, activity_logs, warehouses,
+│                           # items (+item_uoms), business_partners, api_endpoints,
+│                           # user_warehouses, transfer_requests (+items)
 └── Views/  layout/ auth/ dashboard users roles profile settings logs
             warehouses/ items/ business_partners/ transfer_requests/ pager/ errors/
 ```
@@ -178,12 +174,12 @@ php vendor/bin/phpunit
 | ชุดเทส | ครอบคลุม |
 |--------|----------|
 | AccessControl / Roles | guest redirect, สิทธิ์ตามกลุ่ม, 403, permission matrix, จัดการบทบาทไดนามิก |
-| Warehouses / Items / BusinessPartners | สิทธิ์เข้าถึง, แสดงข้อมูล, guard ของ sync (ไม่มี URL/endpoint/บริษัทผิด) |
-| ApiEndpoints | สร้าง/ลบ, กันชื่อซ้ำในบริษัท, ชื่อซ้ำข้ามบริษัทได้ |
+| Warehouses / Items / BusinessPartners | สิทธิ์เข้าถึง, แสดงข้อมูล (รวม UoM badge), guard ของ sync (ไม่มี URL/endpoint), cascade ลบ UoM |
+| ApiEndpoints | สร้าง/ลบ, กันชื่อซ้ำ |
 | Settings | บันทึกธีม/API URL/Key, ปฏิเสธ URL ผิด, sidebar helpers |
-| Users | ผูก warehouse ตามบริษัท (กรอง server-side), validate บริษัท |
-| TransferRequests | สร้างเอกสาร+line, กันไม่มี line, เลขรันแยกบริษัท, สิทธิ์เห็นเฉพาะของตัวเอง, AJAX preview |
-| UiHelper / TransferRequestModel (unit) | `local_datetime()` แปลง timezone, `nextDocNo()` รันแยกบริษัท/เดือน |
+| Users | ผูก warehouse (กรอง server-side, ตัด id ที่ไม่มีจริง) |
+| TransferRequests | สร้างเอกสาร+line, กันไม่มี line, เลขรันแยกเดือน, guard คลัง/สินค้าที่ไม่มีจริง, สิทธิ์เห็นเฉพาะของตัวเอง, AJAX preview |
+| UiHelper / TransferRequestModel (unit) | `local_datetime()` แปลง timezone, `nextDocNo()` รันแยกเดือน |
 | Profile | เลือก avatar ไอคอน, ปฏิเสธไอคอนปลอม, ค่าเริ่มต้น |
 
 ## ความปลอดภัย
@@ -193,7 +189,7 @@ php vendor/bin/phpunit
 - **403 page** สำหรับผู้ใช้ที่ล็อกอินแล้วแต่ไม่มีสิทธิ์
 - รหัสผ่าน/throttle/session จัดการโดย Shield
 - กันลบ/ลดสิทธิ์/ระงับ **superadmin คนสุดท้าย** และลบบัญชีตัวเองไม่ได้
-- Transfer Request: ผู้ที่ไม่ใช่ admin เข้าดู/ลบเอกสารของผู้อื่นไม่ได้ (404), การผูกคลังตรวจ server-side กันข้ามบริษัท
+- Transfer Request: ผู้ที่ไม่ใช่ admin เข้าดู/ลบเอกสารของผู้อื่นไม่ได้ (404), คลัง/สินค้าในเอกสารตรวจ server-side ว่ามีจริง
 
 ## ก่อนขึ้น production
 

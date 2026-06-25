@@ -46,79 +46,54 @@ final class UsersTest extends CIUnitTestCase
         return $user;
     }
 
-    private function makeWarehouse(string $company, string $code): int
+    private function makeWarehouse(string $code): int
     {
         $m = new WarehouseModel();
-        $m->insert(['company' => $company, 'code' => $code, 'name' => $code . ' name']);
+        $m->insert(['code' => $code, 'name' => $code . ' name']);
 
         return $m->getInsertID();
     }
 
-    public function testCreateUserBindsOnlyAllowedCompanyWarehouse(): void
+    public function testCreateUserBindsSelectedWarehouses(): void
     {
         $admin = $this->makeUser('admin', 'superadmin');
-        $skyWh = $this->makeWarehouse('SKY', 'WS1');
-        $jojoWh = $this->makeWarehouse('JOJO', 'WJ1');
+        $wh1   = $this->makeWarehouse('W1');
+        $wh2   = $this->makeWarehouse('W2');
 
         $this->actingAs($admin)->post('users/create', [
-            'name'           => 'Somchai',
-            'username'       => 'somchai',
-            'email'          => 'somchai@example.com',
-            'password'       => 'secret12345',
-            'group'          => 'viewer',
-            'company'        => 'JOJO',
-            'status'         => 'active',
-            'warehouse_sky'  => $skyWh,   // must be ignored for a JOJO user
-            'warehouse_jojo' => $jojoWh,
+            'name'       => 'Somchai',
+            'username'   => 'somchai',
+            'email'      => 'somchai@example.com',
+            'password'   => 'secret12345',
+            'group'      => 'viewer',
+            'status'     => 'active',
+            'warehouses' => [$wh1, $wh2],
         ])->assertRedirectTo('/users');
 
         $created = (new UserModel())->where('username', 'somchai')->first();
         $this->assertNotNull($created);
-        $this->assertSame('JOJO', $created->company);
 
-        $bound = (new UserWarehouseModel())->boundByCompany((int) $created->id);
-        $this->assertSame([$jojoWh], array_values($bound));
-        $this->assertArrayNotHasKey('SKY', $bound);
+        $bound = (new UserWarehouseModel())->boundIds((int) $created->id);
+        sort($bound);
+        $this->assertSame([$wh1, $wh2], $bound);
     }
 
-    public function testCreateAllCompanyUserBindsBothWarehouses(): void
+    public function testCreateUserIgnoresUnknownWarehouseId(): void
     {
         $admin = $this->makeUser('admin', 'superadmin');
-        $skyWh = $this->makeWarehouse('SKY', 'WS1');
-        $jojoWh = $this->makeWarehouse('JOJO', 'WJ1');
+        $wh1   = $this->makeWarehouse('W1');
 
         $this->actingAs($admin)->post('users/create', [
-            'name'           => 'All User',
-            'username'       => 'alluser',
-            'email'          => 'alluser@example.com',
-            'password'       => 'secret12345',
-            'group'          => 'viewer',
-            'company'        => 'ALL',
-            'status'         => 'active',
-            'warehouse_sky'  => $skyWh,
-            'warehouse_jojo' => $jojoWh,
+            'name'       => 'All User',
+            'username'   => 'alluser',
+            'email'      => 'alluser@example.com',
+            'password'   => 'secret12345',
+            'group'      => 'viewer',
+            'status'     => 'active',
+            'warehouses' => [$wh1, 999999], // 999999 doesn't exist → dropped
         ])->assertRedirectTo('/users');
 
         $created = (new UserModel())->where('username', 'alluser')->first();
-        $bound   = (new UserWarehouseModel())->boundByCompany((int) $created->id);
-
-        $this->assertSame($skyWh, $bound['SKY']);
-        $this->assertSame($jojoWh, $bound['JOJO']);
-    }
-
-    public function testCreateUserRejectsInvalidCompany(): void
-    {
-        $admin = $this->makeUser('admin', 'superadmin');
-        $this->actingAs($admin)->post('users/create', [
-            'name'     => 'Bad',
-            'username' => 'baduser',
-            'email'    => 'bad@example.com',
-            'password' => 'secret12345',
-            'group'    => 'viewer',
-            'company'  => 'NOPE',
-            'status'   => 'active',
-        ])->assertRedirect();
-
-        $this->assertNull((new UserModel())->where('username', 'baduser')->first());
+        $this->assertSame([$wh1], (new UserWarehouseModel())->boundIds((int) $created->id));
     }
 }

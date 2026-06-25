@@ -59,7 +59,7 @@ final class ItemsTest extends CIUnitTestCase
 
     public function testItemsShowOnPage(): void
     {
-        (new ItemModel())->insert(['company' => 'SKY', 'item_code' => 'ITM-1', 'item_name' => 'Widget', 'default_warehouse' => 'WH1']);
+        (new ItemModel())->insert(['item_code' => 'ITM-1', 'item_name' => 'Widget', 'default_warehouse' => 'WH1']);
         $admin  = $this->makeUser('admin', 'superadmin');
         $result = $this->actingAs($admin)->get('items');
         $result->assertSee('ITM-1');
@@ -70,7 +70,6 @@ final class ItemsTest extends CIUnitTestCase
     {
         $items = new ItemModel();
         $items->insert([
-            'company'           => 'SKY',
             'item_code'         => 'ITM-UOM',
             'item_name'         => 'Multi UoM Widget',
             'default_warehouse' => 'WH1',
@@ -92,7 +91,7 @@ final class ItemsTest extends CIUnitTestCase
     public function testDeletingItemCascadesUoms(): void
     {
         $items = new ItemModel();
-        $items->insert(['company' => 'SKY', 'item_code' => 'ITM-DEL', 'item_name' => 'Doomed']);
+        $items->insert(['item_code' => 'ITM-DEL', 'item_name' => 'Doomed']);
         $itemId = (int) $items->getInsertID();
 
         $uoms = new \App\Models\ItemUomModel();
@@ -106,14 +105,7 @@ final class ItemsTest extends CIUnitTestCase
     public function testSyncWithoutApiUrlRedirects(): void
     {
         $admin = $this->makeUser('admin', 'superadmin');
-        $this->actingAs($admin)->post('items/sync/JOJO')->assertRedirect();
-        $this->assertSame(0, (new ItemModel())->where('company', 'JOJO')->countAllResults());
-    }
-
-    public function testSyncUnknownCompany404(): void
-    {
-        $admin = $this->makeUser('admin', 'superadmin');
-        $this->expectException(\CodeIgniter\Exceptions\PageNotFoundException::class);
-        $this->actingAs($admin)->post('items/sync/XX');
+        $this->actingAs($admin)->post('items/sync')->assertRedirect();
+        $this->assertSame(0, (new ItemModel())->countAllResults());
     }
 }

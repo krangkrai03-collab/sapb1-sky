@@ -10,15 +10,13 @@ class CreateApiEndpoints extends Migration
     {
         $this->forge->addField([
             'id'         => ['type' => 'INT', 'constraint' => 11, 'unsigned' => true, 'auto_increment' => true],
-            'company'    => ['type' => 'VARCHAR', 'constraint' => 20],
             'name'       => ['type' => 'VARCHAR', 'constraint' => 100],
             'path'       => ['type' => 'VARCHAR', 'constraint' => 255],
             'created_at' => ['type' => 'DATETIME', 'null' => true],
         ]);
         $this->forge->addKey('id', true);
-        $this->forge->addKey('company');
-        // No duplicate endpoint name within the same company.
-        $this->forge->addUniqueKey(['company', 'name']);
+        // No duplicate endpoint name.
+        $this->forge->addUniqueKey('name');
         $this->forge->createTable('api_endpoints');
     }
 

@@ -10,5 +10,5 @@ class WarehouseModel extends Model
     protected $primaryKey    = 'id';
     protected $returnType    = 'object';
     protected $useTimestamps = false;
-    protected $allowedFields = ['company', 'code', 'name', 'created_at'];
+    protected $allowedFields = ['code', 'name', 'created_at'];
 }

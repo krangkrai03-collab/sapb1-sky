@@ -8,9 +8,6 @@ use App\Models\ApiEndpointModel;
 
 class Items extends BaseController
 {
-    /** Companies that own items (kept separate). */
-    private const COMPANIES = ['SKY', 'JOJO'];
-
     /** Accepted endpoint names (configured in Settings) for item-master data. */
     private const SYNC_ENDPOINTS = ['ItemMaster', 'Item', 'Items'];
 
@@ -27,61 +24,47 @@ class Items extends BaseController
 
     public function index()
     {
-        $byCompany = [];
-        foreach (self::COMPANIES as $company) {
-            $list = $this->items
-                ->where('company', $company)
-                ->orderBy('item_code', 'asc')
+        $list = $this->items->orderBy('item_code', 'asc')->findAll();
+
+        // Attach each item's units of measure (inventory UoM first).
+        $ids    = array_map(static fn ($it) => $it->id, $list);
+        $byItem = [];
+        if ($ids !== []) {
+            $rows = $this->uoms->whereIn('item_id', $ids)
+                ->orderBy('is_inventory_uom', 'DESC')
+                ->orderBy('base_qty', 'ASC')
                 ->findAll();
-
-            // Attach each item's units of measure (inventory UoM first).
-            $ids = array_map(static fn ($it) => $it->id, $list);
-            $byItem = [];
-            if ($ids !== []) {
-                $rows = $this->uoms->whereIn('item_id', $ids)
-                    ->orderBy('is_inventory_uom', 'DESC')
-                    ->orderBy('base_qty', 'ASC')
-                    ->findAll();
-                foreach ($rows as $u) {
-                    $byItem[$u->item_id][] = $u;
-                }
+            foreach ($rows as $u) {
+                $byItem[$u->item_id][] = $u;
             }
-            foreach ($list as $it) {
-                $it->uoms = $byItem[$it->id] ?? [];
-            }
-
-            $byCompany[$company] = $list;
+        }
+        foreach ($list as $it) {
+            $it->uoms = $byItem[$it->id] ?? [];
         }
 
         return $this->render('items/index', [
-            'title'     => lang('App.itemMaster'),
-            'companies' => self::COMPANIES,
-            'byCompany' => $byCompany,
+            'title' => lang('App.itemMaster'),
+            'items' => $list,
         ]);
     }
 
     /**
-     * Pull item-master data for a company from SAP (base Web API URL + the
-     * "ItemMaster" sub-endpoint) and upsert it into the items table.
+     * Pull item-master data from SAP (base Web API URL + the "ItemMaster"
+     * sub-endpoint) and upsert it into the items table.
      *
-     * Expected response: a JSON array of objects, each with item code, name
-     * and (optionally) a default warehouse — common key spellings accepted.
+     * Expected response: a JSON array of objects, each with item code, name,
+     * a default warehouse and a list of UoMs — common key spellings accepted.
      */
-    public function sync($company)
+    public function sync()
     {
-        $company = strtoupper((string) $company);
-        if (! in_array($company, self::COMPANIES, true)) {
-            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
-        }
-
-        $baseUrl = (string) branding('apiUrl' . ucfirst(strtolower($company)), '');
+        $baseUrl = (string) branding('apiUrl', '');
         if ($baseUrl === '') {
-            return redirect()->to('items')->with('error', lang('App.syncNoUrl', [$company]));
+            return redirect()->to('items')->with('error', lang('App.syncNoUrl'));
         }
 
-        $endpoint = $this->endpoints->where('company', $company)->whereIn('name', self::SYNC_ENDPOINTS)->first();
+        $endpoint = $this->endpoints->whereIn('name', self::SYNC_ENDPOINTS)->first();
         if ($endpoint === null) {
-            return redirect()->to('items')->with('error', lang('App.syncNoEndpoint', [$company, self::SYNC_ENDPOINTS[0]]));
+            return redirect()->to('items')->with('error', lang('App.syncNoEndpoint', [self::SYNC_ENDPOINTS[0]]));
         }
         $url = rtrim($baseUrl, '/') . '/' . ltrim($endpoint->path, '/');
         if (! sync_url_is_safe($url)) {
@@ -89,7 +72,7 @@ class Items extends BaseController
         }
 
         $options = ['timeout' => 10, 'http_errors' => false];
-        $apiKey  = (string) branding('apiKey' . ucfirst(strtolower($company)), '');
+        $apiKey  = (string) branding('apiKey', '');
         if ($apiKey !== '') {
             $options['headers'] = ['X-API-Key' => $apiKey];
         }
@@ -117,10 +100,9 @@ class Items extends BaseController
                 }
                 $seen[] = $code;
 
-                $existing = $this->items->where('company', $company)->where('item_code', $code)->first();
+                $existing = $this->items->where('item_code', $code)->first();
                 if ($existing === null) {
                     $this->items->insert([
-                        'company'           => $company,
                         'item_code'         => $code,
                         'item_name'         => $name,
                         'default_warehouse' => $wh,
@@ -143,14 +125,14 @@ class Items extends BaseController
 
             if ($seen !== []) {
                 // Children (item_uoms) are removed via the ON DELETE CASCADE FK.
-                $this->items->where('company', $company)->whereNotIn('item_code', $seen)->delete();
+                $this->items->whereNotIn('item_code', $seen)->delete();
             }
 
-            log_activity('item.sync', "ซิงก์ Item Master จาก SAP: [{$company}] +{$added}");
-            return redirect()->to('items')->with('message', lang('App.syncDone', [$company, $added]));
+            log_activity('item.sync', "ซิงก์ Item Master จาก SAP: +{$added}");
+            return redirect()->to('items')->with('message', lang('App.syncDone', [$added]));
         } catch (\Throwable $e) {
-            log_activity('item.sync.fail', "ซิงก์ Item Master จาก SAP ไม่สำเร็จ: [{$company}] — " . $e->getMessage());
-            return redirect()->to('items')->with('error', lang('App.syncFailed', [$company]));
+            log_activity('item.sync.fail', 'ซิงก์ Item Master จาก SAP ไม่สำเร็จ — ' . $e->getMessage());
+            return redirect()->to('items')->with('error', lang('App.syncFailed'));
         }
     }
 

@@ -50,17 +50,17 @@ $routes->post('settings', 'Settings::update', ['filter' => 'perm:settings.manage
 $routes->post('api-endpoints/create',        'ApiEndpoints::store',     ['filter' => 'perm:settings.manage']);
 $routes->post('api-endpoints/delete/(:num)', 'ApiEndpoints::delete/$1', ['filter' => 'perm:settings.manage']);
 
-// Warehouses (per-company: SKY / JOJO) — synced from SAP, part of system settings
-$routes->get('warehouses',                  'Warehouses::index',   ['filter' => 'perm:settings.manage']);
-$routes->post('warehouses/sync/(:segment)', 'Warehouses::sync/$1', ['filter' => 'perm:settings.manage']);
+// Warehouses — synced from SAP, part of system settings
+$routes->get('warehouses',       'Warehouses::index', ['filter' => 'perm:settings.manage']);
+$routes->post('warehouses/sync', 'Warehouses::sync',  ['filter' => 'perm:settings.manage']);
 
-// Item Master (per-company: SKY / JOJO) — synced from SAP, part of system settings
-$routes->get('items',                  'Items::index',   ['filter' => 'perm:settings.manage']);
-$routes->post('items/sync/(:segment)', 'Items::sync/$1', ['filter' => 'perm:settings.manage']);
+// Item Master — synced from SAP, part of system settings
+$routes->get('items',       'Items::index', ['filter' => 'perm:settings.manage']);
+$routes->post('items/sync', 'Items::sync',  ['filter' => 'perm:settings.manage']);
 
-// Business Partners (per-company: SKY / JOJO) — synced from SAP, part of system settings
-$routes->get('business-partners',                  'BusinessPartners::index',   ['filter' => 'perm:settings.manage']);
-$routes->post('business-partners/sync/(:segment)', 'BusinessPartners::sync/$1', ['filter' => 'perm:settings.manage']);
+// Business Partners — synced from SAP, part of system settings
+$routes->get('business-partners',       'BusinessPartners::index', ['filter' => 'perm:settings.manage']);
+$routes->post('business-partners/sync', 'BusinessPartners::sync',  ['filter' => 'perm:settings.manage']);
 
 // Self-service profile (any authenticated user; own account only)
 $routes->get('profile',           'Profile::index',    ['filter' => 'session']);

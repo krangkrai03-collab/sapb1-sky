@@ -10,14 +10,11 @@ class CreateWarehouses extends Migration
     {
         $this->forge->addField([
             'id'         => ['type' => 'INT', 'constraint' => 11, 'unsigned' => true, 'auto_increment' => true],
-            'company'    => ['type' => 'VARCHAR', 'constraint' => 20],
             'name'       => ['type' => 'VARCHAR', 'constraint' => 150],
             'created_at' => ['type' => 'DATETIME', 'null' => true],
         ]);
         $this->forge->addKey('id', true);
-        $this->forge->addKey('company');
-        // No duplicate warehouse name within the same company.
-        $this->forge->addUniqueKey(['company', 'name']);
+        // The natural key (code) is added in AddWarehouseCode.
         $this->forge->createTable('warehouses');
     }
 

@@ -48,23 +48,25 @@ final class TransferRequestsTest extends CIUnitTestCase
         return $user;
     }
 
-    /** Seed the warehouses/items master used by createRequest() for a company. */
-    private function seedMaster(string $company): void
+    /** Seed the warehouses/items master used by createRequest() (idempotent). */
+    private function seedMaster(): void
     {
         $wh = new WarehouseModel();
         foreach (['WH1', 'WH2'] as $code) {
-            $wh->insert(['company' => $company, 'code' => $code, 'name' => $code]);
+            if ($wh->where('code', $code)->first() === null) {
+                $wh->insert(['code' => $code, 'name' => $code]);
+            }
         }
-        (new ItemModel())->insert([
-            'company' => $company, 'item_code' => 'ITM-1', 'item_name' => 'Item 1', 'default_warehouse' => 'WH1',
-        ]);
+        $items = new ItemModel();
+        if ($items->where('item_code', 'ITM-1')->first() === null) {
+            $items->insert(['item_code' => 'ITM-1', 'item_name' => 'Item 1', 'default_warehouse' => 'WH1']);
+        }
     }
 
-    private function createRequest(User $actor, string $company): void
+    private function createRequest(User $actor): void
     {
-        $this->seedMaster($company);
+        $this->seedMaster();
         $this->actingAs($actor)->post('transfer-requests/create', [
-            'company'      => $company,
             'posting_date' => '2026-06-15',
             'items'        => [
                 ['item_code' => 'ITM-1', 'quantity' => '5', 'from_warehouse' => 'WH1', 'to_warehouse' => 'WH2', 'uom' => 'PCS'],
@@ -75,12 +77,11 @@ final class TransferRequestsTest extends CIUnitTestCase
     public function testCreatePersistsHeaderAndLine(): void
     {
         $viewer = $this->makeUser('viewer', 'viewer');
-        $this->createRequest($viewer, 'SKY');
+        $this->createRequest($viewer);
 
         $req = (new TransferRequestModel())->orderBy('id', 'DESC')->first();
         $this->assertNotNull($req);
-        $this->assertStringStartsWith('ITRS2606', $req->doc_no);
-        $this->assertSame('SKY', $req->company);
+        $this->assertStringStartsWith('ITR2606', $req->doc_no);
         $this->assertSame('Open', $req->status);
         $this->assertSame((int) $viewer->id, (int) $req->created_by);
 
@@ -93,24 +94,22 @@ final class TransferRequestsTest extends CIUnitTestCase
     {
         $viewer = $this->makeUser('viewer', 'viewer');
         $this->actingAs($viewer)->post('transfer-requests/create', [
-            'company'      => 'SKY',
             'posting_date' => '2026-06-15',
         ])->assertRedirect();
 
         $this->assertSame(0, (new TransferRequestModel())->countAllResults());
     }
 
-    public function testCrossCompanyWarehouseRejected(): void
+    public function testUnknownWarehouseRejected(): void
     {
         $viewer = $this->makeUser('viewer', 'viewer');
-        $this->seedMaster('SKY'); // WH1/WH2 + ITM-1 belong to SKY only
+        $this->seedMaster(); // WH1/WH2 + ITM-1 only
 
-        // SKY document, but the line references a warehouse that isn't in SKY's master.
+        // The line references a warehouse that isn't in the master.
         $this->actingAs($viewer)->post('transfer-requests/create', [
-            'company'      => 'SKY',
             'posting_date' => '2026-06-15',
             'items'        => [
-                ['item_code' => 'ITM-1', 'quantity' => '5', 'from_warehouse' => 'JOJO-WH', 'to_warehouse' => 'WH2', 'uom' => 'PCS'],
+                ['item_code' => 'ITM-1', 'quantity' => '5', 'from_warehouse' => 'NOPE-WH', 'to_warehouse' => 'WH2', 'uom' => 'PCS'],
             ],
         ])->assertRedirect();
 
@@ -120,11 +119,10 @@ final class TransferRequestsTest extends CIUnitTestCase
     public function testUnknownItemRejected(): void
     {
         $viewer = $this->makeUser('viewer', 'viewer');
-        $this->seedMaster('SKY');
+        $this->seedMaster();
 
-        // Item code that does not exist in the company master must be refused.
+        // Item code that does not exist in the master must be refused.
         $this->actingAs($viewer)->post('transfer-requests/create', [
-            'company'      => 'SKY',
             'posting_date' => '2026-06-15',
             'items'        => [
                 ['item_code' => 'GHOST-ITEM', 'quantity' => '5', 'from_warehouse' => 'WH1', 'to_warehouse' => 'WH2', 'uom' => 'PCS'],
@@ -134,24 +132,24 @@ final class TransferRequestsTest extends CIUnitTestCase
         $this->assertSame(0, (new TransferRequestModel())->countAllResults());
     }
 
-    public function testDocNumbersAreSeparatePerCompany(): void
+    public function testDocNumbersAreSequential(): void
     {
         $viewer = $this->makeUser('viewer', 'viewer');
-        $this->createRequest($viewer, 'SKY');
-        $this->createRequest($viewer, 'JOJO');
+        $this->createRequest($viewer);
+        $this->createRequest($viewer);
 
-        $m   = new TransferRequestModel();
-        $sky = $m->where('company', 'SKY')->first();
-        $jojo = $m->where('company', 'JOJO')->first();
+        $docs = array_map(
+            static fn ($r) => $r->doc_no,
+            (new TransferRequestModel())->orderBy('id', 'ASC')->findAll()
+        );
 
-        $this->assertSame('ITRS26060001', $sky->doc_no);
-        $this->assertSame('ITRJ26060001', $jojo->doc_no);
+        $this->assertSame(['ITR26060001', 'ITR26060002'], $docs);
     }
 
     public function testNonAdminCannotViewOthersRequest(): void
     {
         $owner = $this->makeUser('owner', 'viewer');
-        $this->createRequest($owner, 'SKY');
+        $this->createRequest($owner);
         $req = (new TransferRequestModel())->orderBy('id', 'DESC')->first();
 
         $other = $this->makeUser('other', 'viewer');
@@ -162,7 +160,7 @@ final class TransferRequestsTest extends CIUnitTestCase
     public function testAdminCanViewAnyRequest(): void
     {
         $owner = $this->makeUser('owner', 'viewer');
-        $this->createRequest($owner, 'SKY');
+        $this->createRequest($owner);
         $req = (new TransferRequestModel())->orderBy('id', 'DESC')->first();
 
         $admin = $this->makeUser('admin', 'superadmin');
@@ -172,7 +170,7 @@ final class TransferRequestsTest extends CIUnitTestCase
     public function testSendToSapMarksSynced(): void
     {
         $viewer = $this->makeUser('viewer', 'viewer');
-        $this->createRequest($viewer, 'SKY');
+        $this->createRequest($viewer);
         $req = (new TransferRequestModel())->orderBy('id', 'DESC')->first();
 
         $this->actingAs($viewer)->post('transfer-requests/send/' . $req->id)->assertRedirect();
@@ -185,7 +183,7 @@ final class TransferRequestsTest extends CIUnitTestCase
     public function testCannotDeleteRequestAlreadySentToSap(): void
     {
         $viewer = $this->makeUser('viewer', 'viewer');
-        $this->createRequest($viewer, 'SKY');
+        $this->createRequest($viewer);
         $req = (new TransferRequestModel())->orderBy('id', 'DESC')->first();
         $this->actingAs($viewer)->post('transfer-requests/send/' . $req->id);
 
@@ -196,8 +194,8 @@ final class TransferRequestsTest extends CIUnitTestCase
     public function testDocNoPreviewEndpointReturnsJson(): void
     {
         $viewer = $this->makeUser('viewer', 'viewer');
-        $result = $this->actingAs($viewer)->get('transfer-requests/next-doc-no?company=JOJO&date=2026-06-15');
+        $result = $this->actingAs($viewer)->get('transfer-requests/next-doc-no?date=2026-06-15');
         $result->assertStatus(200);
-        $this->assertSame('ITRJ26060001', json_decode($result->getJSON())->doc_no);
+        $this->assertSame('ITR26060001', json_decode($result->getJSON())->doc_no);
     }
 }

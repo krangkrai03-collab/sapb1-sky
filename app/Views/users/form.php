@@ -1,9 +1,10 @@
 <?php
 $isEdit    = $user !== null;
 $action    = $isEdit ? site_url('users/edit/' . $user->id) : site_url('users/create');
-$curGroup   = $isEdit ? (($user->getGroups()[0] ?? '')) : '';
-$curStatus  = $isEdit ? ($user->isBanned() ? 'banned' : 'active') : 'active';
-$curCompany = $isEdit ? ($user->company ?? 'ALL') : 'ALL';
+$curGroup  = $isEdit ? (($user->getGroups()[0] ?? '')) : '';
+$curStatus = $isEdit ? ($user->isBanned() ? 'banned' : 'active') : 'active';
+// Bound warehouse ids to pre-select (posted values win on validation error).
+$boundSel = old('warehouses') !== null ? array_map('intval', (array) old('warehouses')) : $boundWh;
 ?>
 <div class="row">
 	<div class="col-md-8 col-lg-6">
@@ -39,31 +40,16 @@ $curCompany = $isEdit ? ($user->company ?? 'ALL') : 'ALL';
 							<?php endforeach; ?>
 						</select>
 					</div>
+
 					<div class="mb-3">
-						<label class="form-label"><?= lang('App.fCompany') ?></label>
-						<select name="company" id="company" class="form-select" required>
-							<?php foreach ($companies as $c): ?>
-								<option value="<?= esc($c, 'attr') ?>" <?= old('company', $curCompany) === $c ? 'selected' : '' ?>><?= esc($c) ?></option>
+						<label class="form-label"><?= lang('App.bindWarehouse') ?></label>
+						<select name="warehouses[]" class="form-select" multiple size="6">
+							<?php foreach ($warehouses as $w): ?>
+								<option value="<?= (int) $w->id ?>" <?= in_array((int) $w->id, $boundSel, true) ? 'selected' : '' ?>><code><?= esc($w->code) ?></code> — <?= esc($w->name) ?></option>
 							<?php endforeach; ?>
 						</select>
+						<small class="text-body-secondary"><?= lang('App.bindWarehouseHint') ?></small>
 					</div>
-
-					<?php
-					$whTheme = ['SKY' => 'info', 'JOJO' => 'warning'];
-					foreach (['SKY', 'JOJO'] as $wc):
-						$field    = 'warehouse_' . strtolower($wc);
-						$selected = (int) old($field, $boundWh[$wc] ?? 0);
-					?>
-						<div class="mb-3 wh-block" data-company="<?= $wc ?>">
-							<label class="form-label"><span class="badge text-bg-<?= $whTheme[$wc] ?> me-1"><?= $wc ?></span> <?= lang('App.bindWarehouse') ?></label>
-							<select name="<?= $field ?>" class="form-select">
-								<option value="">— <?= lang('App.none') ?> —</option>
-								<?php foreach (($warehouses[$wc] ?? []) as $w): ?>
-									<option value="<?= (int) $w->id ?>" <?= $selected === (int) $w->id ? 'selected' : '' ?>><?= esc($w->name) ?></option>
-								<?php endforeach; ?>
-							</select>
-						</div>
-					<?php endforeach; ?>
 
 					<div class="mb-3">
 						<label class="form-label"><?= lang('App.status') ?></label>
@@ -81,20 +67,3 @@ $curCompany = $isEdit ? ($user->company ?? 'ALL') : 'ALL';
 		</div>
 	</div>
 </div>
-<script>
-	// Show warehouse selects based on the chosen company (ALL = both).
-	(function () {
-		var company = document.getElementById('company');
-		var blocks  = document.querySelectorAll('.wh-block');
-		function refresh() {
-			var v = company.value;
-			blocks.forEach(function (b) {
-				var show = (v === 'ALL') || (v === b.getAttribute('data-company'));
-				b.style.display = show ? '' : 'none';
-				if (!show) { var sel = b.querySelector('select'); if (sel) { sel.value = ''; } }
-			});
-		}
-		company.addEventListener('change', refresh);
-		refresh();
-	})();
-</script>

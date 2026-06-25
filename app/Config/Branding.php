@@ -25,11 +25,9 @@ class Branding extends BaseConfig
     public string $loginBg   = ''; // background image path (relative to base_url)
     public string $loginHint = ''; // helper text under the login form (empty = hidden)
 
-    // Web API endpoints (per company, kept separate)
-    public string $apiUrlSky  = '';
-    public string $apiUrlJojo = '';
-    public string $apiKeySky  = '';
-    public string $apiKeyJojo = '';
+    // Web API endpoint (SAP gateway)
+    public string $apiUrl = '';
+    public string $apiKey = '';
 
     // Session idle timeout in minutes (auto-logout when no activity)
     public string $sessionTimeout = '120';

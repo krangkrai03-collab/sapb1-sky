@@ -7,9 +7,6 @@ use App\Models\ApiEndpointModel;
 
 class BusinessPartners extends BaseController
 {
-    /** Companies that own business partners (kept separate). */
-    private const COMPANIES = ['SKY', 'JOJO'];
-
     /** Accepted endpoint names (configured in Settings) for business-partner data. */
     private const SYNC_ENDPOINTS = ['BusinessPartner', 'BusinessPartners', 'BP'];
 
@@ -24,43 +21,29 @@ class BusinessPartners extends BaseController
 
     public function index()
     {
-        $byCompany = [];
-        foreach (self::COMPANIES as $company) {
-            $byCompany[$company] = $this->partners
-                ->where('company', $company)
-                ->orderBy('bp_code', 'asc')
-                ->findAll();
-        }
-
         return $this->render('business_partners/index', [
-            'title'     => lang('App.businessPartners'),
-            'companies' => self::COMPANIES,
-            'byCompany' => $byCompany,
+            'title'    => lang('App.businessPartners'),
+            'partners' => $this->partners->orderBy('bp_code', 'asc')->findAll(),
         ]);
     }
 
     /**
-     * Pull business-partner data for a company from SAP (base Web API URL +
-     * the "BusinessPartner" sub-endpoint) and upsert it into the table.
+     * Pull business-partner data from SAP (base Web API URL + the
+     * "BusinessPartner" sub-endpoint) and upsert it into the table.
      *
      * Expected response: a JSON array of objects with BP code, name and
      * (optionally) a ship-to address — common key spellings accepted.
      */
-    public function sync($company)
+    public function sync()
     {
-        $company = strtoupper((string) $company);
-        if (! in_array($company, self::COMPANIES, true)) {
-            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
-        }
-
-        $baseUrl = (string) branding('apiUrl' . ucfirst(strtolower($company)), '');
+        $baseUrl = (string) branding('apiUrl', '');
         if ($baseUrl === '') {
-            return redirect()->to('business-partners')->with('error', lang('App.syncNoUrl', [$company]));
+            return redirect()->to('business-partners')->with('error', lang('App.syncNoUrl'));
         }
 
-        $endpoint = $this->endpoints->where('company', $company)->whereIn('name', self::SYNC_ENDPOINTS)->first();
+        $endpoint = $this->endpoints->whereIn('name', self::SYNC_ENDPOINTS)->first();
         if ($endpoint === null) {
-            return redirect()->to('business-partners')->with('error', lang('App.syncNoEndpoint', [$company, self::SYNC_ENDPOINTS[0]]));
+            return redirect()->to('business-partners')->with('error', lang('App.syncNoEndpoint', [self::SYNC_ENDPOINTS[0]]));
         }
         $url = rtrim($baseUrl, '/') . '/' . ltrim($endpoint->path, '/');
         if (! sync_url_is_safe($url)) {
@@ -68,7 +51,7 @@ class BusinessPartners extends BaseController
         }
 
         $options = ['timeout' => 10, 'http_errors' => false];
-        $apiKey  = (string) branding('apiKey' . ucfirst(strtolower($company)), '');
+        $apiKey  = (string) branding('apiKey', '');
         if ($apiKey !== '') {
             $options['headers'] = ['X-API-Key' => $apiKey];
         }
@@ -96,10 +79,9 @@ class BusinessPartners extends BaseController
                 }
                 $seen[] = $code;
 
-                $existing = $this->partners->where('company', $company)->where('bp_code', $code)->first();
+                $existing = $this->partners->where('bp_code', $code)->first();
                 if ($existing === null) {
                     $this->partners->insert([
-                        'company'    => $company,
                         'bp_code'    => $code,
                         'bp_name'    => $name,
                         'ship_to'    => $shipTo,
@@ -112,14 +94,14 @@ class BusinessPartners extends BaseController
             }
 
             if ($seen !== []) {
-                $this->partners->where('company', $company)->whereNotIn('bp_code', $seen)->delete();
+                $this->partners->whereNotIn('bp_code', $seen)->delete();
             }
 
-            log_activity('bp.sync', "ซิงก์ Business Partner จาก SAP: [{$company}] +{$added}");
-            return redirect()->to('business-partners')->with('message', lang('App.syncDone', [$company, $added]));
+            log_activity('bp.sync', "ซิงก์ Business Partner จาก SAP: +{$added}");
+            return redirect()->to('business-partners')->with('message', lang('App.syncDone', [$added]));
         } catch (\Throwable $e) {
-            log_activity('bp.sync.fail', "ซิงก์ Business Partner จาก SAP ไม่สำเร็จ: [{$company}] — " . $e->getMessage());
-            return redirect()->to('business-partners')->with('error', lang('App.syncFailed', [$company]));
+            log_activity('bp.sync.fail', 'ซิงก์ Business Partner จาก SAP ไม่สำเร็จ — ' . $e->getMessage());
+            return redirect()->to('business-partners')->with('error', lang('App.syncFailed'));
         }
     }
 }

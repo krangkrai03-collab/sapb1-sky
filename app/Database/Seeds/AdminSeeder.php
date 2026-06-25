@@ -21,6 +21,7 @@ class AdminSeeder extends Seeder
             'username' => 'admin',
             'email'    => 'admin@example.com',
             'password' => 'secret12345',
+            'active'   => 1,
         ]);
 
         $users->save($user);

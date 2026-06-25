@@ -1,6 +1,5 @@
 <?php
 $statusTheme  = ['Open' => 'success', 'Closed' => 'secondary', 'Cancelled' => 'danger'];
-$companyTheme = ['SKY' => 'info', 'JOJO' => 'warning'];
 $syncTheme    = ['pending' => 'secondary', 'sending' => 'info', 'sent' => 'success', 'failed' => 'danger'];
 $syncLabel    = ['pending' => lang('App.syncPending'), 'sending' => lang('App.syncSending'), 'sent' => lang('App.syncSent'), 'failed' => lang('App.syncFailed')];
 $sync         = $req->sync_status ?: 'pending';
@@ -13,7 +12,6 @@ foreach ($lines as $l) { $totalQty += (float) $l->quantity; }
 		<i class="fas fa-right-left text-body-secondary"></i>
 		<span class="fs-5 fw-semibold" style="font-family:var(--bs-font-monospace)"><?= esc($req->doc_no) ?></span>
 		<span class="badge text-bg-<?= $statusTheme[$req->status] ?? 'secondary' ?>"><?= esc($req->status) ?></span>
-		<span class="badge text-bg-<?= $companyTheme[$req->company] ?? 'secondary' ?>"><?= esc($req->company) ?></span>
 		<span class="badge text-bg-<?= $syncTheme[$sync] ?? 'secondary' ?>"><i class="fas fa-cloud-arrow-up me-1"></i><?= esc($syncLabel[$sync] ?? $sync) ?></span>
 		<a href="<?= site_url('transfer-requests') ?>" class="btn btn-sm btn-secondary ms-auto"><i class="fas fa-arrow-left me-1"></i> <?= lang('App.back') ?></a>
 	</div>

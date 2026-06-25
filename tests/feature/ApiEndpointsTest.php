@@ -49,38 +49,29 @@ final class ApiEndpointsTest extends CIUnitTestCase
     {
         $admin = $this->makeUser('admin', 'superadmin');
         $this->actingAs($admin)->post('api-endpoints/create', [
-            'company' => 'SKY', 'name' => 'Warehouses', 'method' => 'GET', 'path' => '/warehouses',
+            'name' => 'Warehouses', 'method' => 'GET', 'path' => '/warehouses',
         ])->assertRedirectTo('/settings');
 
-        $row = (new ApiEndpointModel())->where('company', 'SKY')->where('name', 'Warehouses')->first();
+        $row = (new ApiEndpointModel())->where('name', 'Warehouses')->first();
         $this->assertNotNull($row);
         $this->assertSame('/warehouses', $row->path);
         $this->assertSame('GET', $row->method);
     }
 
-    public function testDuplicateNameSameCompanyIsRejected(): void
+    public function testDuplicateNameIsRejected(): void
     {
         $admin = $this->makeUser('admin', 'superadmin');
-        $payload = ['company' => 'SKY', 'name' => 'ItemMaster', 'method' => 'GET', 'path' => '/item'];
+        $payload = ['name' => 'ItemMaster', 'method' => 'GET', 'path' => '/item'];
         $this->actingAs($admin)->post('api-endpoints/create', $payload);
         $this->actingAs($admin)->post('api-endpoints/create', $payload);
 
-        $this->assertSame(1, (new ApiEndpointModel())->where('company', 'SKY')->where('name', 'ItemMaster')->countAllResults());
-    }
-
-    public function testSameNameDifferentCompanyAllowed(): void
-    {
-        $admin = $this->makeUser('admin', 'superadmin');
-        $this->actingAs($admin)->post('api-endpoints/create', ['company' => 'SKY', 'name' => 'ItemMaster', 'method' => 'GET', 'path' => '/item']);
-        $this->actingAs($admin)->post('api-endpoints/create', ['company' => 'JOJO', 'name' => 'ItemMaster', 'method' => 'POST', 'path' => '/item']);
-
-        $this->assertSame(2, (new ApiEndpointModel())->where('name', 'ItemMaster')->countAllResults());
+        $this->assertSame(1, (new ApiEndpointModel())->where('name', 'ItemMaster')->countAllResults());
     }
 
     public function testDeleteEndpoint(): void
     {
         $model = new ApiEndpointModel();
-        $model->insert(['company' => 'SKY', 'name' => 'Warehouses', 'path' => '/warehouses']);
+        $model->insert(['name' => 'Warehouses', 'path' => '/warehouses']);
         $id = $model->getInsertID();
 
         $admin = $this->makeUser('admin', 'superadmin');
@@ -93,7 +84,7 @@ final class ApiEndpointsTest extends CIUnitTestCase
     {
         $viewer = $this->makeUser('viewer', 'viewer');
         $this->actingAs($viewer)->post('api-endpoints/create', [
-            'company' => 'SKY', 'name' => 'Warehouses', 'path' => '/warehouses',
+            'name' => 'Warehouses', 'path' => '/warehouses',
         ])->assertStatus(403);
     }
 }

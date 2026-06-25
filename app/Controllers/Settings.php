@@ -8,17 +8,10 @@ class Settings extends BaseController
 {
     public function index()
     {
-        $endpointModel = new ApiEndpointModel();
-        $endpoints     = ['SKY' => [], 'JOJO' => []];
-        foreach ($endpointModel->orderBy('name', 'asc')->findAll() as $e) {
-            $endpoints[$e->company][] = $e;
-        }
-
         return $this->render('settings/index', [
-            'title'        => lang('App.settings'),
-            'branding'     => config('Branding'),
-            'apiCompanies' => ApiEndpoints::COMPANIES,
-            'endpoints'    => $endpoints,
+            'title'     => lang('App.settings'),
+            'branding'  => config('Branding'),
+            'endpoints' => (new ApiEndpointModel())->orderBy('name', 'asc')->findAll(),
         ]);
     }
 
@@ -38,10 +31,8 @@ class Settings extends BaseController
             'theme_sidebar_color' => ['label' => lang('App.sidebarColor'), 'rules' => "permit_empty|in_list[{$colors}]"],
             'locale'        => ['label' => lang('App.defaultLang'), 'rules' => 'permit_empty|in_list[th,en]'],
             'session_timeout' => ['label' => lang('App.sessionTimeout'), 'rules' => 'permit_empty|is_natural_no_zero|less_than_equal_to[10080]'],
-            'api_url_sky'   => ['label' => lang('App.apiUrlSky'), 'rules' => 'permit_empty|valid_url_strict|max_length[255]'],
-            'api_url_jojo'  => ['label' => lang('App.apiUrlJojo'), 'rules' => 'permit_empty|valid_url_strict|max_length[255]'],
-            'api_key_sky'   => ['label' => lang('App.apiKeySky'), 'rules' => 'permit_empty|max_length[255]'],
-            'api_key_jojo'  => ['label' => lang('App.apiKeyJojo'), 'rules' => 'permit_empty|max_length[255]'],
+            'api_url'       => ['label' => lang('App.apiUrl'), 'rules' => 'permit_empty|valid_url_strict|max_length[255]'],
+            'api_key'       => ['label' => lang('App.apiKey'), 'rules' => 'permit_empty|max_length[255]'],
         ];
         $hasUpload = $this->request->getFile('login_bg_file') && $this->request->getFile('login_bg_file')->isValid();
         if ($hasUpload) {
@@ -65,10 +56,8 @@ class Settings extends BaseController
         $settings->set('Branding.themeSidebar', $this->request->getPost('theme_sidebar') ?: 'dark');
         $settings->set('Branding.themeSidebarColor', (string) $this->request->getPost('theme_sidebar_color'));
         $settings->set('Branding.darkMode', $this->request->getPost('dark_mode') ? '1' : '0');
-        $settings->set('Branding.apiUrlSky', (string) $this->request->getPost('api_url_sky'));
-        $settings->set('Branding.apiUrlJojo', (string) $this->request->getPost('api_url_jojo'));
-        $settings->set('Branding.apiKeySky', (string) $this->request->getPost('api_key_sky'));
-        $settings->set('Branding.apiKeyJojo', (string) $this->request->getPost('api_key_jojo'));
+        $settings->set('Branding.apiUrl', (string) $this->request->getPost('api_url'));
+        $settings->set('Branding.apiKey', (string) $this->request->getPost('api_key'));
 
         // Login background: new upload wins; else honour explicit remove.
         if ($hasUpload) {

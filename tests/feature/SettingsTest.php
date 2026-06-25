@@ -54,28 +54,26 @@ final class SettingsTest extends CIUnitTestCase
             'theme_sidebar'       => 'light',
             'theme_sidebar_color' => 'success',
             'locale'              => 'th',
-            'api_url_sky'         => 'https://api.sky.test',
-            'api_url_jojo'        => 'https://api.jojo.test',
-            'api_key_sky'         => 'KEYSKY',
-            'api_key_jojo'        => 'KEYJOJO',
+            'api_url'             => 'https://api.test',
+            'api_key'             => 'SECRETKEY',
         ])->assertRedirectTo('/settings');
 
         $this->assertSame('My Portal', setting('Branding.appName'));
         $this->assertSame('success', setting('Branding.themeSidebarColor'));
-        $this->assertSame('https://api.sky.test', setting('Branding.apiUrlSky'));
-        $this->assertSame('KEYJOJO', setting('Branding.apiKeyJojo'));
+        $this->assertSame('https://api.test', setting('Branding.apiUrl'));
+        $this->assertSame('SECRETKEY', setting('Branding.apiKey'));
     }
 
     public function testInvalidApiUrlIsRejected(): void
     {
         $admin = $this->makeUser('admin', 'superadmin');
         $this->actingAs($admin)->post('settings', [
-            'app_name'    => 'My Portal',
-            'api_url_sky' => 'not-a-valid-url',
+            'app_name' => 'My Portal',
+            'api_url'  => 'not-a-valid-url',
         ])->assertRedirect();
 
         // The invalid value must never be persisted.
-        $this->assertNotSame('not-a-valid-url', setting('Branding.apiUrlSky'));
+        $this->assertNotSame('not-a-valid-url', setting('Branding.apiUrl'));
     }
 
     public function testSidebarHelpersReflectSavedColor(): void

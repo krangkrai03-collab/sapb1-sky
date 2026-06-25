@@ -11,16 +11,6 @@
 				<div class="col-lg-7">
 					<div class="text-uppercase text-body-secondary small fw-semibold mb-2"><i class="fas fa-user-tie me-1"></i> <?= lang('App.itrBusinessPartner') ?></div>
 					<div class="row mb-2">
-						<label class="col-sm-4 col-form-label"><?= lang('App.fCompany') ?> <span class="text-danger">*</span></label>
-						<div class="col-sm-8">
-							<select name="company" id="company" class="form-select" required>
-								<?php foreach ($companies as $c): ?>
-									<option value="<?= esc($c, 'attr') ?>" <?= old('company') === $c ? 'selected' : '' ?>><?= esc($c) ?></option>
-								<?php endforeach; ?>
-							</select>
-						</div>
-					</div>
-					<div class="row mb-2">
 						<label class="col-sm-4 col-form-label"><?= lang('App.itrBusinessPartner') ?></label>
 						<div class="col-sm-8"><input type="text" name="business_partner" class="form-control" value="<?= esc(old('business_partner')) ?>"></div>
 					</div>
@@ -136,7 +126,6 @@
 		var ITEMS = <?= json_encode($items, JSON_UNESCAPED_UNICODE) ?>;
 		var idx = 0;
 
-		var company  = document.getElementById('company');
 		var fromWh   = document.getElementById('from_warehouse');
 		var toWh     = document.getElementById('to_warehouse');
 		var tbody    = document.querySelector('#lines tbody');
@@ -161,14 +150,13 @@
 			return s;
 		}
 		function addRow() {
-			var c = company.value;
 			var tr = document.createElement('tr');
 			tr.innerHTML =
 				'<td class="text-center text-body-secondary line-num"></td>' +
-				'<td><select name="items[' + idx + '][item_code]" class="form-select form-select-sm item-sel">' + options(ITEMS[c], '', true) + '</select></td>' +
+				'<td><select name="items[' + idx + '][item_code]" class="form-select form-select-sm item-sel">' + options(ITEMS, '', true) + '</select></td>' +
 				'<td><input type="text" class="form-control form-control-sm item-desc" readonly></td>' +
-				'<td><select name="items[' + idx + '][from_warehouse]" class="form-select form-select-sm">' + options(WH[c], fromWh.value, false) + '</select></td>' +
-				'<td><select name="items[' + idx + '][to_warehouse]" class="form-select form-select-sm">' + options(WH[c], toWh.value, false) + '</select></td>' +
+				'<td><select name="items[' + idx + '][from_warehouse]" class="form-select form-select-sm">' + options(WH, fromWh.value, false) + '</select></td>' +
+				'<td><select name="items[' + idx + '][to_warehouse]" class="form-select form-select-sm">' + options(WH, toWh.value, false) + '</select></td>' +
 				'<td><input type="number" step="0.001" min="0" name="items[' + idx + '][quantity]" class="form-control form-control-sm text-end qty" value="0"></td>' +
 				'<td><input type="text" name="items[' + idx + '][uom]" class="form-control form-control-sm"></td>' +
 				'<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger del-line"><i class="fas fa-times"></i></button></td>';
@@ -198,19 +186,19 @@
 			tbody.innerHTML = '';
 			idx = 0;
 			[fromWh, toWh].forEach(function (el) { if (el.tomselect) { el.tomselect.destroy(); } });
-			fromWh.innerHTML = options(WH[company.value], '', false);
-			toWh.innerHTML   = options(WH[company.value], '', false);
+			fromWh.innerHTML = options(WH, '', false);
+			toWh.innerHTML   = options(WH, '', false);
 			tomify(fromWh);
 			tomify(toWh);
 			addRow();
 		}
 
-		// Preview the next document number per company + posting-date month.
+		// Preview the next document number per posting-date month.
 		var posting = document.querySelector('input[name="posting_date"]');
 		var docNoEl = document.getElementById('doc_no_preview');
 		function refreshDocNo() {
 			if (! docNoEl) { return; }
-			var qs = '?company=' + encodeURIComponent(company.value) + '&date=' + encodeURIComponent(posting ? posting.value : '');
+			var qs = '?date=' + encodeURIComponent(posting ? posting.value : '');
 			fetch('<?= site_url('transfer-requests/next-doc-no') ?>' + qs)
 				.then(function (r) { return r.json(); })
 				.then(function (j) { if (j && j.doc_no) { docNoEl.value = j.doc_no; } })
@@ -218,7 +206,6 @@
 		}
 		if (posting) { posting.addEventListener('change', refreshDocNo); }
 
-		company.addEventListener('change', function () { rebuild(); refreshDocNo(); });
 		document.getElementById('addLine').addEventListener('click', addRow);
 		tbody.addEventListener('click', function (e) {
 			var btn = e.target.closest('.del-line');

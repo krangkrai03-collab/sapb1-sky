@@ -7,9 +7,6 @@ use App\Models\ApiEndpointModel;
 
 class Warehouses extends BaseController
 {
-    /** Companies that own warehouses (kept separate). */
-    private const COMPANIES = ['SKY', 'JOJO'];
-
     /** Accepted endpoint names (configured in Settings) for warehouse data. */
     private const SYNC_ENDPOINTS = ['Warehouses', 'Warehouse'];
 
@@ -24,46 +21,31 @@ class Warehouses extends BaseController
 
     public function index()
     {
-        // Group warehouses per company so the view can render one column each.
-        $byCompany = [];
-        foreach (self::COMPANIES as $company) {
-            $byCompany[$company] = $this->warehouses
-                ->where('company', $company)
-                ->orderBy('name', 'asc')
-                ->findAll();
-        }
-
         return $this->render('warehouses/index', [
-            'title'     => lang('App.warehouses'),
-            'companies' => self::COMPANIES,
-            'byCompany' => $byCompany,
+            'title'      => lang('App.warehouses'),
+            'warehouses' => $this->warehouses->orderBy('code', 'asc')->findAll(),
         ]);
     }
 
     /**
-     * Pull warehouse data for a company from SAP (its configured Web API URL)
-     * and upsert it into the warehouses table.
+     * Pull warehouse data from SAP (the configured Web API URL) and upsert it
+     * into the warehouses table.
      *
      * Expected response: a JSON array of objects with a warehouse code and
      * name ([{"code": "WH01", "name": "Main"}, ...]); common key spellings
      * accepted. Plain strings are treated as code = name.
      */
-    public function sync($company)
+    public function sync()
     {
-        $company = strtoupper((string) $company);
-        if (! in_array($company, self::COMPANIES, true)) {
-            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
-        }
-
-        $baseUrl = (string) branding('apiUrl' . ucfirst(strtolower($company)), '');
+        $baseUrl = (string) branding('apiUrl', '');
         if ($baseUrl === '') {
-            return redirect()->to('warehouses')->with('error', lang('App.syncNoUrl', [$company]));
+            return redirect()->to('warehouses')->with('error', lang('App.syncNoUrl'));
         }
 
-        // Resolve the "Warehouses" sub-endpoint configured for this company.
-        $endpoint = $this->endpoints->where('company', $company)->whereIn('name', self::SYNC_ENDPOINTS)->first();
+        // Resolve the "Warehouses" sub-endpoint configured in Settings.
+        $endpoint = $this->endpoints->whereIn('name', self::SYNC_ENDPOINTS)->first();
         if ($endpoint === null) {
-            return redirect()->to('warehouses')->with('error', lang('App.syncNoEndpoint', [$company, self::SYNC_ENDPOINTS[0]]));
+            return redirect()->to('warehouses')->with('error', lang('App.syncNoEndpoint', [self::SYNC_ENDPOINTS[0]]));
         }
         $url = rtrim($baseUrl, '/') . '/' . ltrim($endpoint->path, '/');
         if (! sync_url_is_safe($url)) {
@@ -71,7 +53,7 @@ class Warehouses extends BaseController
         }
 
         $options = ['timeout' => 10, 'http_errors' => false];
-        $apiKey  = (string) branding('apiKey' . ucfirst(strtolower($company)), '');
+        $apiKey  = (string) branding('apiKey', '');
         if ($apiKey !== '') {
             $options['headers'] = ['X-API-Key' => $apiKey];
         }
@@ -101,10 +83,9 @@ class Warehouses extends BaseController
                 }
                 $seen[] = $code;
 
-                $exists = $this->warehouses->where('company', $company)->where('code', $code)->first();
+                $exists = $this->warehouses->where('code', $code)->first();
                 if ($exists === null) {
                     $this->warehouses->insert([
-                        'company'    => $company,
                         'code'       => $code,
                         'name'       => $name !== '' ? $name : $code,
                         'created_at' => date('Y-m-d H:i:s'),
@@ -117,14 +98,14 @@ class Warehouses extends BaseController
 
             // Mirror SAP: drop local rows no longer returned.
             if ($seen !== []) {
-                $this->warehouses->where('company', $company)->whereNotIn('code', $seen)->delete();
+                $this->warehouses->whereNotIn('code', $seen)->delete();
             }
 
-            log_activity('warehouse.sync', "ซิงก์คลังสินค้าจาก SAP: [{$company}] +{$added}");
-            return redirect()->to('warehouses')->with('message', lang('App.syncDone', [$company, $added]));
+            log_activity('warehouse.sync', "ซิงก์คลังสินค้าจาก SAP: +{$added}");
+            return redirect()->to('warehouses')->with('message', lang('App.syncDone', [$added]));
         } catch (\Throwable $e) {
-            log_activity('warehouse.sync.fail', "ซิงก์คลังสินค้าจาก SAP ไม่สำเร็จ: [{$company}] — " . $e->getMessage());
-            return redirect()->to('warehouses')->with('error', lang('App.syncFailed', [$company]));
+            log_activity('warehouse.sync.fail', 'ซิงก์คลังสินค้าจาก SAP ไม่สำเร็จ — ' . $e->getMessage());
+            return redirect()->to('warehouses')->with('error', lang('App.syncFailed'));
         }
     }
 }

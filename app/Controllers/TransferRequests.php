@@ -9,8 +9,6 @@ use App\Models\ItemModel;
 
 class TransferRequests extends BaseController
 {
-    private const COMPANIES = ['SKY', 'JOJO'];
-
     private TransferRequestModel $requests;
     private TransferRequestItemModel $lines;
     private WarehouseModel $warehouses;
@@ -69,18 +67,15 @@ class TransferRequests extends BaseController
     {
         return $this->render('transfer_requests/form', [
             'title'      => lang('App.itrNew'),
-            'companies'  => self::COMPANIES,
-            'warehouses' => $this->byCompany($this->warehouses, ['code', 'name']),
-            'items'      => $this->byCompany($this->items, ['item_code', 'item_name']),
-            'docNo'      => $this->requests->nextDocNo(self::COMPANIES[0]),
+            'warehouses' => $this->masterList($this->warehouses, ['code', 'name']),
+            'items'      => $this->masterList($this->items, ['item_code', 'item_name']),
+            'docNo'      => $this->requests->nextDocNo(),
         ]);
     }
 
     public function store()
     {
-        $companies = implode(',', self::COMPANIES);
-        $rules     = [
-            'company'       => ['label' => lang('App.fCompany'), 'rules' => "required|in_list[{$companies}]"],
+        $rules = [
             'posting_date'  => ['label' => lang('App.itrPostingDate'), 'rules' => 'permit_empty|valid_date'],
             'due_date'      => ['label' => lang('App.itrDueDate'), 'rules' => 'permit_empty|valid_date'],
             'document_date' => ['label' => lang('App.itrDocumentDate'), 'rules' => 'permit_empty|valid_date'],
@@ -89,24 +84,22 @@ class TransferRequests extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        $company = (string) $this->request->getPost('company');
-        $rawLines = $this->parseLines($company);
+        $rawLines = $this->parseLines();
         if ($rawLines === []) {
             return redirect()->back()->withInput()->with('error', lang('App.itrNoLines'));
         }
 
-        // Server-side company guard: the form filters warehouses/items by company
-        // client-side, but a crafted POST could otherwise mix SKY/JOJO data or
-        // reference master records that don't exist. Reject before persisting.
-        if (($refError = $this->companyRefError($company, $rawLines)) !== null) {
+        // Server-side guard: every warehouse/item referenced (header + lines)
+        // must exist in the master. A crafted POST could otherwise reference
+        // records that don't exist.
+        if (($refError = $this->refError($rawLines)) !== null) {
             return redirect()->back()->withInput()->with('error', $refError);
         }
 
-        // Running number is taken from the DB per company + posting-date month.
-        $docNo = $this->requests->nextDocNo($company, $this->ymFromDate($this->request->getPost('posting_date')));
+        // Running number is taken from the DB per posting-date month.
+        $docNo = $this->requests->nextDocNo($this->ymFromDate($this->request->getPost('posting_date')));
         $this->requests->insert([
             'doc_no'           => $docNo,
-            'company'          => $company,
             'status'           => 'Open',
             'business_partner' => $this->request->getPost('business_partner'),
             'name'             => $this->request->getPost('name'),
@@ -132,16 +125,15 @@ class TransferRequests extends BaseController
             $this->lines->insert($line);
         }
 
-        log_activity('itr.create', "สร้างคำขอโอนย้าย {$docNo} [{$company}] " . ($lineNo - 1) . ' รายการ');
+        log_activity('itr.create', "สร้างคำขอโอนย้าย {$docNo} " . ($lineNo - 1) . ' รายการ');
         return redirect()->to('transfer-requests/show/' . $requestId)->with('message', lang('App.itrCreated', [$docNo]));
     }
 
-    /** AJAX: preview the next document number for a company + posting-date month. */
+    /** AJAX: preview the next document number for a posting-date month. */
     public function docNoPreview()
     {
-        $company = (string) $this->request->getGet('company');
-        $ym      = $this->ymFromDate((string) $this->request->getGet('date'));
-        return $this->response->setJSON(['doc_no' => $this->requests->nextDocNo($company, $ym)]);
+        $ym = $this->ymFromDate((string) $this->request->getGet('date'));
+        return $this->response->setJSON(['doc_no' => $this->requests->nextDocNo($ym)]);
     }
 
     public function show($id)
@@ -230,17 +222,17 @@ class TransferRequests extends BaseController
 
     /**
      * Every warehouse and item referenced by the document (header + lines) must
-     * belong to the selected company; items must exist in that company's master.
-     * Returns the first violation message, or null when everything is in scope.
+     * exist in the master; items must exist in Item Master. Returns the first
+     * violation message, or null when everything is in scope.
      */
-    private function companyRefError(string $company, array $rawLines): ?string
+    private function refError(array $rawLines): ?string
     {
         $validWh = [];
-        foreach ($this->warehouses->where('company', $company)->findAll() as $w) {
+        foreach ($this->warehouses->findAll() as $w) {
             $validWh[(string) $w->code] = true;
         }
         $validItem = [];
-        foreach ($this->items->where('company', $company)->findAll() as $it) {
+        foreach ($this->items->findAll() as $it) {
             $validItem[(string) $it->item_code] = true;
         }
 
@@ -249,24 +241,24 @@ class TransferRequests extends BaseController
             return $code !== '' && ! isset($validWh[$code]);
         };
 
-        // Header warehouses (optional, but must match the company when present).
+        // Header warehouses (optional, but must exist when present).
         foreach (['from_warehouse', 'to_warehouse'] as $field) {
             $code = trim((string) $this->request->getPost($field));
             if ($badWarehouse($code)) {
-                return lang('App.itrBadWarehouse', [$code, $company]);
+                return lang('App.itrBadWarehouse', [$code]);
             }
         }
 
-        // Line items must exist in the company master; line warehouses must match.
+        // Line items must exist in the master; line warehouses must exist too.
         foreach ($rawLines as $line) {
             if (! isset($validItem[$line['item_code']])) {
-                return lang('App.itrBadItem', [$line['item_code'], $company]);
+                return lang('App.itrBadItem', [$line['item_code']]);
             }
             if ($badWarehouse($line['from_warehouse'])) {
-                return lang('App.itrBadWarehouse', [$line['from_warehouse'], $company]);
+                return lang('App.itrBadWarehouse', [$line['from_warehouse']]);
             }
             if ($badWarehouse($line['to_warehouse'])) {
-                return lang('App.itrBadWarehouse', [$line['to_warehouse'], $company]);
+                return lang('App.itrBadWarehouse', [$line['to_warehouse']]);
             }
         }
 
@@ -285,15 +277,12 @@ class TransferRequests extends BaseController
         return date('ym');
     }
 
-    /** Group a model's rows by company: ['SKY' => [...], 'JOJO' => [...]]. */
-    private function byCompany($model, array $fields): array
+    /** A model's rows as [['code' => ..., 'name' => ...], ...] for the picker. */
+    private function masterList($model, array $fields): array
     {
-        $out = ['SKY' => [], 'JOJO' => []];
+        $out = [];
         foreach ($model->orderBy($fields[0], 'asc')->findAll() as $row) {
-            if (! isset($out[$row->company])) {
-                continue;
-            }
-            $out[$row->company][] = ['code' => $row->{$fields[0]}, 'name' => $row->{$fields[1]}];
+            $out[] = ['code' => $row->{$fields[0]}, 'name' => $row->{$fields[1]}];
         }
         return $out;
     }
@@ -302,7 +291,7 @@ class TransferRequests extends BaseController
      * Build line rows from posted items[], keeping only rows with an item code
      * and a positive quantity, and resolving the item name from Item Master.
      */
-    private function parseLines(string $company): array
+    private function parseLines(): array
     {
         $posted = $this->request->getPost('items');
         if (! is_array($posted)) {
@@ -316,7 +305,7 @@ class TransferRequests extends BaseController
             if ($code === '' || $qty <= 0) {
                 continue;
             }
-            $item = $this->items->where('company', $company)->where('item_code', $code)->first();
+            $item = $this->items->where('item_code', $code)->first();
             $rows[] = [
                 'item_code'      => $code,
                 'item_name'      => $item->item_name ?? '',

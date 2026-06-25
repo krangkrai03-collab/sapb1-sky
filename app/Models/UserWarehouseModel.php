@@ -12,22 +12,13 @@ class UserWarehouseModel extends Model
     protected $useTimestamps = false;
     protected $allowedFields = ['user_id', 'warehouse_id'];
 
-    /**
-     * Warehouse ids currently bound to a user, keyed by company
-     * (e.g. ['SKY' => 12, 'JOJO' => 5]). One warehouse per company.
-     */
-    public function boundByCompany(int $userId): array
+    /** Warehouse ids currently bound to a user. */
+    public function boundIds(int $userId): array
     {
-        $rows = $this->select('warehouses.id, warehouses.company')
-            ->join('warehouses', 'warehouses.id = user_warehouses.warehouse_id')
-            ->where('user_warehouses.user_id', $userId)
-            ->findAll();
-
-        $map = [];
-        foreach ($rows as $row) {
-            $map[$row->company] = (int) $row->id;
-        }
-        return $map;
+        return array_map(
+            static fn ($row) => (int) $row->warehouse_id,
+            $this->where('user_id', $userId)->findAll()
+        );
     }
 
     /** Replace a user's warehouse bindings with the given warehouse ids. */
