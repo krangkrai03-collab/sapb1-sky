@@ -204,6 +204,7 @@ return [
 
     // business partner
     'masterData'          => 'Master Data',
+    'administration'      => 'Administration',
     'businessPartners'    => 'Business Partner',
     'bpCode'              => 'BP Code',
     'bpName'              => 'BP Name',

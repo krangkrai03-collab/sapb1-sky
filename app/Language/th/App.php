@@ -204,6 +204,7 @@ return [
 
     // business partner
     'masterData'          => 'ข้อมูลหลัก (Master Data)',
+    'administration'      => 'ผู้ดูแลระบบ (Administration)',
     'businessPartners'    => 'Business Partner',
     'bpCode'              => 'รหัสคู่ค้า',
     'bpName'              => 'ชื่อคู่ค้า',

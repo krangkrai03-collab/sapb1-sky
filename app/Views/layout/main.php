@@ -64,15 +64,6 @@
 					<li class="nav-item">
 						<a href="<?= site_url('transfer-requests') ?>" class="nav-link <?= active_menu('transfer-requests') ?>"><i class="nav-icon fas fa-right-left"></i><p><?= lang('App.inventoryTransferRequest') ?></p></a>
 					</li>
-					<?php if (user_can('users.view')): ?>
-					<li class="nav-item"><a href="<?= site_url('users') ?>" class="nav-link <?= active_menu('users') ?>"><i class="nav-icon fas fa-users"></i><p><?= lang('App.users') ?></p></a></li>
-					<?php endif; ?>
-					<?php if (user_can('roles.view')): ?>
-					<li class="nav-item"><a href="<?= site_url('roles') ?>" class="nav-link <?= active_menu('roles') ?>"><i class="nav-icon fas fa-user-shield"></i><p><?= lang('App.roles') ?></p></a></li>
-					<?php endif; ?>
-					<?php if (user_can('logs.view')): ?>
-					<li class="nav-item"><a href="<?= site_url('logs') ?>" class="nav-link <?= active_menu('logs') ?>"><i class="nav-icon fas fa-history"></i><p><?= lang('App.logs') ?></p></a></li>
-					<?php endif; ?>
 					<?php if (user_can('settings.manage')): ?>
 					<?php $masterOpen = active_menu('business-partners') || active_menu('items') || active_menu('warehouses'); ?>
 					<li class="nav-item <?= $masterOpen ? 'menu-open' : '' ?>">
@@ -86,7 +77,21 @@
 							<li class="nav-item"><a href="<?= site_url('warehouses') ?>" class="nav-link <?= active_menu('warehouses') ?>"><i class="nav-icon fas fa-warehouse"></i><p><?= lang('App.warehouses') ?></p></a></li>
 						</ul>
 					</li>
-					<li class="nav-item"><a href="<?= site_url('settings') ?>" class="nav-link <?= active_menu('settings') ?>"><i class="nav-icon fas fa-cog"></i><p><?= lang('App.settings') ?></p></a></li>
+					<?php endif; ?>
+					<?php if (user_can('users.view') || user_can('roles.view') || user_can('logs.view') || user_can('settings.manage')): ?>
+					<?php $adminOpen = active_menu('users') || active_menu('roles') || active_menu('logs') || active_menu('settings'); ?>
+					<li class="nav-item <?= $adminOpen ? 'menu-open' : '' ?>">
+						<a href="#" class="nav-link <?= $adminOpen ? 'active' : '' ?>">
+							<i class="nav-icon fas fa-screwdriver-wrench"></i>
+							<p><?= lang('App.administration') ?> <i class="nav-arrow fas fa-angle-right"></i></p>
+						</a>
+						<ul class="nav nav-treeview">
+							<?php if (user_can('users.view')): ?><li class="nav-item"><a href="<?= site_url('users') ?>" class="nav-link <?= active_menu('users') ?>"><i class="nav-icon fas fa-users"></i><p><?= lang('App.users') ?></p></a></li><?php endif; ?>
+							<?php if (user_can('roles.view')): ?><li class="nav-item"><a href="<?= site_url('roles') ?>" class="nav-link <?= active_menu('roles') ?>"><i class="nav-icon fas fa-user-shield"></i><p><?= lang('App.roles') ?></p></a></li><?php endif; ?>
+							<?php if (user_can('logs.view')): ?><li class="nav-item"><a href="<?= site_url('logs') ?>" class="nav-link <?= active_menu('logs') ?>"><i class="nav-icon fas fa-history"></i><p><?= lang('App.logs') ?></p></a></li><?php endif; ?>
+							<?php if (user_can('settings.manage')): ?><li class="nav-item"><a href="<?= site_url('settings') ?>" class="nav-link <?= active_menu('settings') ?>"><i class="nav-icon fas fa-cog"></i><p><?= lang('App.settings') ?></p></a></li><?php endif; ?>
+						</ul>
+					</li>
 					<?php endif; ?>
 				</ul>
 			</nav>
