@@ -10,8 +10,8 @@ class BusinessPartners extends BaseController
     /** Companies that own business partners (kept separate). */
     private const COMPANIES = ['SKY', 'JOJO'];
 
-    /** API endpoint (configured in Settings) that returns business-partner data. */
-    private const SYNC_ENDPOINT = 'BusinessPartner';
+    /** Accepted endpoint names (configured in Settings) for business-partner data. */
+    private const SYNC_ENDPOINTS = ['BusinessPartner', 'BusinessPartners', 'BP'];
 
     private BusinessPartnerModel $partners;
     private ApiEndpointModel $endpoints;
@@ -58,9 +58,9 @@ class BusinessPartners extends BaseController
             return redirect()->to('business-partners')->with('error', lang('App.syncNoUrl', [$company]));
         }
 
-        $endpoint = $this->endpoints->where('company', $company)->like('name', self::SYNC_ENDPOINT, 'none')->first();
+        $endpoint = $this->endpoints->where('company', $company)->whereIn('name', self::SYNC_ENDPOINTS)->first();
         if ($endpoint === null) {
-            return redirect()->to('business-partners')->with('error', lang('App.syncNoEndpoint', [$company, self::SYNC_ENDPOINT]));
+            return redirect()->to('business-partners')->with('error', lang('App.syncNoEndpoint', [$company, self::SYNC_ENDPOINTS[0]]));
         }
         $url = rtrim($baseUrl, '/') . '/' . ltrim($endpoint->path, '/');
         if (! sync_url_is_safe($url)) {

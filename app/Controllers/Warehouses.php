@@ -10,8 +10,8 @@ class Warehouses extends BaseController
     /** Companies that own warehouses (kept separate). */
     private const COMPANIES = ['SKY', 'JOJO'];
 
-    /** API endpoint (configured in Settings) that returns warehouse data. */
-    private const SYNC_ENDPOINT = 'Warehouses';
+    /** Accepted endpoint names (configured in Settings) for warehouse data. */
+    private const SYNC_ENDPOINTS = ['Warehouses', 'Warehouse'];
 
     private WarehouseModel $warehouses;
     private ApiEndpointModel $endpoints;
@@ -61,9 +61,9 @@ class Warehouses extends BaseController
         }
 
         // Resolve the "Warehouses" sub-endpoint configured for this company.
-        $endpoint = $this->endpoints->where('company', $company)->like('name', self::SYNC_ENDPOINT, 'none')->first();
+        $endpoint = $this->endpoints->where('company', $company)->whereIn('name', self::SYNC_ENDPOINTS)->first();
         if ($endpoint === null) {
-            return redirect()->to('warehouses')->with('error', lang('App.syncNoEndpoint', [$company, self::SYNC_ENDPOINT]));
+            return redirect()->to('warehouses')->with('error', lang('App.syncNoEndpoint', [$company, self::SYNC_ENDPOINTS[0]]));
         }
         $url = rtrim($baseUrl, '/') . '/' . ltrim($endpoint->path, '/');
         if (! sync_url_is_safe($url)) {

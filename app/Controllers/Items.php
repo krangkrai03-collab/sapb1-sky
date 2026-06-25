@@ -10,8 +10,8 @@ class Items extends BaseController
     /** Companies that own items (kept separate). */
     private const COMPANIES = ['SKY', 'JOJO'];
 
-    /** API endpoint (configured in Settings) that returns item-master data. */
-    private const SYNC_ENDPOINT = 'ItemMaster';
+    /** Accepted endpoint names (configured in Settings) for item-master data. */
+    private const SYNC_ENDPOINTS = ['ItemMaster', 'Item', 'Items'];
 
     private ItemModel $items;
     private ApiEndpointModel $endpoints;
@@ -58,9 +58,9 @@ class Items extends BaseController
             return redirect()->to('items')->with('error', lang('App.syncNoUrl', [$company]));
         }
 
-        $endpoint = $this->endpoints->where('company', $company)->like('name', self::SYNC_ENDPOINT, 'none')->first();
+        $endpoint = $this->endpoints->where('company', $company)->whereIn('name', self::SYNC_ENDPOINTS)->first();
         if ($endpoint === null) {
-            return redirect()->to('items')->with('error', lang('App.syncNoEndpoint', [$company, self::SYNC_ENDPOINT]));
+            return redirect()->to('items')->with('error', lang('App.syncNoEndpoint', [$company, self::SYNC_ENDPOINTS[0]]));
         }
         $url = rtrim($baseUrl, '/') . '/' . ltrim($endpoint->path, '/');
         if (! sync_url_is_safe($url)) {
