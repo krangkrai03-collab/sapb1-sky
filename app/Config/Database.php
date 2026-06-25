@@ -200,5 +200,38 @@ class Database extends Config
         if (ENVIRONMENT === 'testing') {
             $this->defaultGroup = 'tests';
         }
+
+        // Platform (Railway/etc.) connection via standard env vars. Env var
+        // names with dots may not be readable, so build the connection from
+        // plain-named vars: MYSQL_URL first, else MYSQL{HOST,PORT,...}.
+        $this->applyPlatformDatabase();
+    }
+
+    /**
+     * Override the default connection from container env vars when present.
+     */
+    private function applyPlatformDatabase(): void
+    {
+        $url = getenv('MYSQL_URL') ?: getenv('DATABASE_URL');
+        if ($url !== false && $url !== '' && ($p = parse_url($url)) !== false && isset($p['host'])) {
+            $this->default['hostname'] = $p['host'];
+            $this->default['port']     = $p['port'] ?? 3306;
+            $this->default['username'] = isset($p['user']) ? rawurldecode($p['user']) : $this->default['username'];
+            $this->default['password'] = isset($p['pass']) ? rawurldecode($p['pass']) : $this->default['password'];
+            $this->default['database'] = isset($p['path']) ? ltrim($p['path'], '/') : $this->default['database'];
+            $this->default['DBDriver'] = 'MySQLi';
+
+            return;
+        }
+
+        $host = getenv('MYSQLHOST');
+        if ($host !== false && $host !== '') {
+            $this->default['hostname'] = $host;
+            $this->default['port']     = getenv('MYSQLPORT') ?: 3306;
+            $this->default['database'] = getenv('MYSQLDATABASE') ?: $this->default['database'];
+            $this->default['username'] = getenv('MYSQLUSER') ?: $this->default['username'];
+            $this->default['password'] = getenv('MYSQLPASSWORD') ?: $this->default['password'];
+            $this->default['DBDriver'] = 'MySQLi';
+        }
     }
 }
