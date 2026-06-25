@@ -128,6 +128,8 @@
 	</div>
 </form>
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 <script>
 	(function () {
 		var WH    = <?= json_encode($warehouses, JSON_UNESCAPED_UNICODE) ?>;
@@ -138,6 +140,13 @@
 		var fromWh   = document.getElementById('from_warehouse');
 		var toWh     = document.getElementById('to_warehouse');
 		var tbody    = document.querySelector('#lines tbody');
+
+		function tomify(el) {
+			// Searchable dropdown (matches both code and name in the option text).
+			if (window.TomSelect && ! el.tomselect) {
+				new TomSelect(el, { maxOptions: 1000, allowEmptyOption: true, create: false, dropdownParent: 'body' });
+			}
+		}
 
 		function esc(s) {
 			return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -165,6 +174,7 @@
 				'<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger del-line"><i class="fas fa-times"></i></button></td>';
 			tbody.appendChild(tr);
 			idx++;
+			tr.querySelectorAll('select').forEach(tomify);
 			renumber();
 		}
 		function renumber() {
@@ -187,8 +197,11 @@
 		function rebuild() {
 			tbody.innerHTML = '';
 			idx = 0;
+			[fromWh, toWh].forEach(function (el) { if (el.tomselect) { el.tomselect.destroy(); } });
 			fromWh.innerHTML = options(WH[company.value], '', false);
 			toWh.innerHTML   = options(WH[company.value], '', false);
+			tomify(fromWh);
+			tomify(toWh);
 			addRow();
 		}
 
