@@ -12,7 +12,7 @@ authentication/RBAC และธีม **AdminLTE 4** (Bootstrap 5, ไม่ใ
 ### พื้นฐาน (port จาก CI3)
 - 🔐 **Auth + RBAC** ด้วย Shield — login ด้วย **ชื่อผู้ใช้หรืออีเมล** (ช่องเดียว), throttle, remember-me
 - 📊 **Dashboard** — สถิติผู้ใช้/กลุ่ม (การ์ดสูงเท่ากันด้วย flexbox)
-- 👥 **จัดการผู้ใช้** — CRUD + กลุ่มสิทธิ์ + ระงับ (ban) + **บริษัท (ALL/SKY/JOJO)** + **ผูกคลังสินค้า** + avatar
+- 👥 **จัดการผู้ใช้** — CRUD + กลุ่มสิทธิ์ + ระงับ (ban) + **บริษัท (ALL/Company 1/Company 2)** + **ผูกคลังสินค้า** + avatar
 - 🛡️ **บทบาท/สิทธิ์ (ไดนามิก)** — สร้าง/แก้/ลบบทบาท + ติ๊กสิทธิ์ผ่านเว็บ เก็บใน DB (Shield groups + matrix)
 - ⚙️ **ตั้งค่าระบบ** — แบรนด์/ธีม/พื้นหลัง login + **URL & API Key ของ Web API** + **endpoint ย่อยต่อบริษัท**
 - 👤 **โปรไฟล์** — แก้ข้อมูลตัวเอง + เปลี่ยนรหัสผ่าน + **เลือก avatar เป็นไอคอนสี** (5 แบบ)
@@ -21,7 +21,7 @@ authentication/RBAC และธีม **AdminLTE 4** (Bootstrap 5, ไม่ใ
 - 🔒 **Hardening** — CSRF, security headers (CSP ฯลฯ), หน้า 403, เมนู/route ตามสิทธิ์
 
 ### โมดูล SAP (เพิ่มใหม่)
-- 🏢 **แยกข้อมูลตามบริษัท** — `SKY` และ `JOJO` แยกขาดจากกันในทุกโมดูล
+- 🏢 **แยกข้อมูลตามบริษัท** — `Company 1` และ `Company 2` แยกขาดจากกันในทุกโมดูล
 - 📦 **Master data sync จาก SAP** — ปุ่ม **Sync Data From SAP** ต่อบริษัท ดึงข้อมูลผ่าน Web API แล้ว upsert:
   - **Item Master** (`/items`) — Itemcode / Itemname / Default Warehouse
   - **Warehouses** (`/warehouses`) — Warehouse Code / Warehouse Name
@@ -95,7 +95,7 @@ php spark serve --port 8081
 ## โมดูล SAP
 
 ### บริษัท (Company)
-ข้อมูลหลักและเอกสารถูกแยกตามบริษัท **`SKY`** และ **`JOJO`** ตลอด — ส่วนผู้ใช้มีค่า `ALL/SKY/JOJO`
+ข้อมูลหลักและเอกสารถูกแยกตามบริษัท **`Company 1`** และ **`Company 2`** ตลอด — ส่วนผู้ใช้มีค่า `ALL/Company 1/Company 2`
 (ผู้ใช้ที่เป็น `ALL` เข้าถึง/ผูกได้ทั้งสองบริษัท)
 
 ### ตั้งค่า Web API (หน้า Settings)
@@ -125,7 +125,7 @@ php spark serve --port 8081
 - **Line items:** เลือกสินค้า (จาก Item Master) / คลังต้นทาง→ปลายทาง / จำนวน / UoM — เพิ่มได้หลายบรรทัด
   (กรองตามบริษัทที่เลือก, บรรทัดแรกลบไม่ได้)
 - **เลขที่เอกสาร** รันแยกตามบริษัท+เดือน: `ITR` + อักษรบริษัท (`S`/`J`) + `yymm` + ลำดับ 4 หลัก
-  เช่น `ITRS26060001` (SKY), `ITRJ26060001` (JOJO) — preview ตอนเปลี่ยน Company/Posting Date, รันจริงจาก DB ตอนบันทึก
+  เช่น `ITRS26060001` (Company 1), `ITRJ26060001` (Company 2) — preview ตอนเปลี่ยน Company/Posting Date, รันจริงจาก DB ตอนบันทึก
 - **คอลัมน์ SAP Document** เตรียมไว้เก็บเลขเอกสารที่ตอบกลับจาก SAP (สำหรับ integration ขาส่ง)
 - **สิทธิ์เห็นข้อมูล:** admin (superadmin) เห็นทุกใบ + คอลัมน์ *Created By*; ผู้ใช้อื่นเห็นเฉพาะของตัวเอง
 - รายการเกิน 20 ใบ → แบ่งหน้า
