@@ -121,7 +121,7 @@ class Items extends BaseController
             log_activity('item.sync', "ซิงก์ Item Master จาก SAP: [{$company}] +{$added}");
             return redirect()->to('items')->with('message', lang('App.syncDone', [$company, $added]));
         } catch (\Throwable $e) {
-            log_activity('item.sync.fail', "ซิงก์ Item Master จาก SAP ไม่สำเร็จ: [{$company}]");
+            log_activity('item.sync.fail', "ซิงก์ Item Master จาก SAP ไม่สำเร็จ: [{$company}] — " . $e->getMessage());
             return redirect()->to('items')->with('error', lang('App.syncFailed', [$company]));
         }
     }

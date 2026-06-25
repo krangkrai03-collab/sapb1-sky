@@ -123,7 +123,7 @@ class Warehouses extends BaseController
             log_activity('warehouse.sync', "ซิงก์คลังสินค้าจาก SAP: [{$company}] +{$added}");
             return redirect()->to('warehouses')->with('message', lang('App.syncDone', [$company, $added]));
         } catch (\Throwable $e) {
-            log_activity('warehouse.sync.fail', "ซิงก์คลังสินค้าจาก SAP ไม่สำเร็จ: [{$company}]");
+            log_activity('warehouse.sync.fail', "ซิงก์คลังสินค้าจาก SAP ไม่สำเร็จ: [{$company}] — " . $e->getMessage());
             return redirect()->to('warehouses')->with('error', lang('App.syncFailed', [$company]));
         }
     }

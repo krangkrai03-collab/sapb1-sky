@@ -118,7 +118,7 @@ class BusinessPartners extends BaseController
             log_activity('bp.sync', "ซิงก์ Business Partner จาก SAP: [{$company}] +{$added}");
             return redirect()->to('business-partners')->with('message', lang('App.syncDone', [$company, $added]));
         } catch (\Throwable $e) {
-            log_activity('bp.sync.fail', "ซิงก์ Business Partner จาก SAP ไม่สำเร็จ: [{$company}]");
+            log_activity('bp.sync.fail', "ซิงก์ Business Partner จาก SAP ไม่สำเร็จ: [{$company}] — " . $e->getMessage());
             return redirect()->to('business-partners')->with('error', lang('App.syncFailed', [$company]));
         }
     }
