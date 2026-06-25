@@ -204,10 +204,12 @@ class App extends BaseConfig
     {
         parent::__construct();
 
-        // On Railway the dotted env var (app.baseURL) may not be readable, so
-        // derive the base URL from the platform-provided public domain.
-        $domain = getenv('RAILWAY_PUBLIC_DOMAIN');
-        if ($domain !== false && $domain !== '') {
+        // Plain-named env vars (the dotted app.baseURL isn't reliably readable
+        // on some hosts). APP_BASE_URL wins; else derive from Railway's domain.
+        $base = getenv('APP_BASE_URL');
+        if ($base !== false && $base !== '') {
+            $this->baseURL = rtrim($base, '/') . '/';
+        } elseif (($domain = getenv('RAILWAY_PUBLIC_DOMAIN')) !== false && $domain !== '') {
             $this->baseURL = 'https://' . $domain . '/';
         }
     }
