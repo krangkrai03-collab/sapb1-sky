@@ -80,24 +80,26 @@ class Warehouses extends BaseController
             $method   = strtoupper($endpoint->method ?? 'GET') === 'POST' ? 'POST' : 'GET';
             $client   = service('curlrequest', $options);
             $response = $client->request($method, $url);
-            $data     = json_decode((string) $response->getBody(), true);
-            if (! is_array($data)) {
-                throw new \RuntimeException('invalid response');
+            $data = json_decode((string) $response->getBody(), true);
+            if (! is_array($data) || ! sap_ok($data)) {
+                throw new \RuntimeException(is_array($data) ? (string) ($data['errMsg'] ?? 'SAP error') : 'invalid response');
             }
 
             $added = 0;
-            foreach ($data as $item) {
+            $seen  = [];
+            foreach (sap_rows($data, ['Warehouses']) as $item) {
                 if (is_string($item)) {
                     $code = $name = trim($item);
                 } elseif (is_array($item)) {
-                    $code = trim((string) ($item['code'] ?? $item['warehouse_code'] ?? $item['warehouseCode'] ?? $item['WarehouseCode'] ?? ''));
-                    $name = trim((string) ($item['name'] ?? $item['warehouse_name'] ?? $item['warehouseName'] ?? $item['WarehouseName'] ?? ''));
+                    $code = trim((string) ($item['code'] ?? $item['WhsCode'] ?? $item['warehouse_code'] ?? $item['warehouseCode'] ?? $item['WarehouseCode'] ?? ''));
+                    $name = trim((string) ($item['name'] ?? $item['WhsName'] ?? $item['warehouse_name'] ?? $item['warehouseName'] ?? $item['WarehouseName'] ?? ''));
                 } else {
                     continue;
                 }
                 if ($code === '') {
                     continue;
                 }
+                $seen[] = $code;
 
                 $exists = $this->warehouses->where('company', $company)->where('code', $code)->first();
                 if ($exists === null) {
@@ -111,6 +113,11 @@ class Warehouses extends BaseController
                 } else {
                     $this->warehouses->update($exists->id, ['name' => $name !== '' ? $name : $code]);
                 }
+            }
+
+            // Mirror SAP: drop local rows no longer returned.
+            if ($seen !== []) {
+                $this->warehouses->where('company', $company)->whereNotIn('code', $seen)->delete();
             }
 
             log_activity('warehouse.sync', "ซิงก์คลังสินค้าจาก SAP: [{$company}] +{$added}");

@@ -77,22 +77,24 @@ class Items extends BaseController
             $method   = strtoupper($endpoint->method ?? 'GET') === 'POST' ? 'POST' : 'GET';
             $client   = service('curlrequest', $options);
             $response = $client->request($method, $url);
-            $data     = json_decode((string) $response->getBody(), true);
-            if (! is_array($data)) {
-                throw new \RuntimeException('invalid response');
+            $data = json_decode((string) $response->getBody(), true);
+            if (! is_array($data) || ! sap_ok($data)) {
+                throw new \RuntimeException(is_array($data) ? (string) ($data['errMsg'] ?? 'SAP error') : 'invalid response');
             }
 
             $added = 0;
-            foreach ($data as $row) {
+            $seen  = [];
+            foreach (sap_rows($data, ['Items', 'ItemMaster']) as $row) {
                 if (! is_array($row)) {
                     continue;
                 }
-                $code = trim((string) ($row['item_code'] ?? $row['itemCode'] ?? $row['ItemCode'] ?? $row['code'] ?? ''));
-                $name = trim((string) ($row['item_name'] ?? $row['itemName'] ?? $row['ItemName'] ?? $row['name'] ?? ''));
-                $wh   = trim((string) ($row['default_warehouse'] ?? $row['defaultWarehouse'] ?? $row['DefaultWarehouse'] ?? $row['warehouse'] ?? ''));
+                $code = trim((string) ($row['item_code'] ?? $row['ItemCode'] ?? $row['itemCode'] ?? $row['code'] ?? ''));
+                $name = trim((string) ($row['item_name'] ?? $row['ItemName'] ?? $row['itemName'] ?? $row['name'] ?? ''));
+                $wh   = trim((string) ($row['default_warehouse'] ?? $row['DefaultWarehouse'] ?? $row['DfltWH'] ?? $row['defaultWarehouse'] ?? $row['warehouse'] ?? ''));
                 if ($code === '') {
                     continue;
                 }
+                $seen[] = $code;
 
                 $existing = $this->items->where('company', $company)->where('item_code', $code)->first();
                 if ($existing === null) {
@@ -110,6 +112,10 @@ class Items extends BaseController
                         'default_warehouse' => $wh,
                     ]);
                 }
+            }
+
+            if ($seen !== []) {
+                $this->items->where('company', $company)->whereNotIn('item_code', $seen)->delete();
             }
 
             log_activity('item.sync', "ซิงก์ Item Master จาก SAP: [{$company}] +{$added}");

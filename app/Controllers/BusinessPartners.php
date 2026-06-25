@@ -77,22 +77,24 @@ class BusinessPartners extends BaseController
             $method   = strtoupper($endpoint->method ?? 'GET') === 'POST' ? 'POST' : 'GET';
             $client   = service('curlrequest', $options);
             $response = $client->request($method, $url);
-            $data     = json_decode((string) $response->getBody(), true);
-            if (! is_array($data)) {
-                throw new \RuntimeException('invalid response');
+            $data = json_decode((string) $response->getBody(), true);
+            if (! is_array($data) || ! sap_ok($data)) {
+                throw new \RuntimeException(is_array($data) ? (string) ($data['errMsg'] ?? 'SAP error') : 'invalid response');
             }
 
             $added = 0;
-            foreach ($data as $row) {
+            $seen  = [];
+            foreach (sap_rows($data, ['BusinessPartners', 'BPList']) as $row) {
                 if (! is_array($row)) {
                     continue;
                 }
-                $code   = trim((string) ($row['bp_code'] ?? $row['bpCode'] ?? $row['BPCode'] ?? $row['code'] ?? $row['CardCode'] ?? ''));
-                $name   = trim((string) ($row['bp_name'] ?? $row['bpName'] ?? $row['BPName'] ?? $row['name'] ?? $row['CardName'] ?? ''));
-                $shipTo = trim((string) ($row['ship_to'] ?? $row['shipTo'] ?? $row['ShipTo'] ?? $row['ship_to_address'] ?? ''));
+                $code   = trim((string) ($row['bp_code'] ?? $row['CardCode'] ?? $row['bpCode'] ?? $row['BPCode'] ?? $row['code'] ?? ''));
+                $name   = trim((string) ($row['bp_name'] ?? $row['CardName'] ?? $row['bpName'] ?? $row['BPName'] ?? $row['name'] ?? ''));
+                $shipTo = trim((string) ($row['ship_to'] ?? $row['ShipToDef'] ?? $row['shipTo'] ?? $row['ShipTo'] ?? $row['ship_to_address'] ?? ''));
                 if ($code === '') {
                     continue;
                 }
+                $seen[] = $code;
 
                 $existing = $this->partners->where('company', $company)->where('bp_code', $code)->first();
                 if ($existing === null) {
@@ -107,6 +109,10 @@ class BusinessPartners extends BaseController
                 } else {
                     $this->partners->update($existing->id, ['bp_name' => $name, 'ship_to' => $shipTo]);
                 }
+            }
+
+            if ($seen !== []) {
+                $this->partners->where('company', $company)->whereNotIn('bp_code', $seen)->delete();
             }
 
             log_activity('bp.sync', "ซิงก์ Business Partner จาก SAP: [{$company}] +{$added}");

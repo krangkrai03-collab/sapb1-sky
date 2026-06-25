@@ -148,6 +148,42 @@ if (! function_exists('sync_url_is_safe')) {
     }
 }
 
+if (! function_exists('sap_rows')) {
+    /**
+     * Extract the data array from a SAP response, which may be a plain list
+     * or wrapped: {"Status":"Success","Warehouses":[...]}. Tries the given
+     * preferred keys first, then common wrappers, then the first list value.
+     */
+    function sap_rows($data, array $preferKeys = []): array
+    {
+        if (! is_array($data)) {
+            return [];
+        }
+        if (array_is_list($data)) {
+            return $data;
+        }
+        foreach (array_merge($preferKeys, ['value', 'data', 'Data', 'result', 'Result', 'rows']) as $k) {
+            if (isset($data[$k]) && is_array($data[$k])) {
+                return array_values($data[$k]);
+            }
+        }
+        foreach ($data as $v) {
+            if (is_array($v) && (array_is_list($v) || $v === [])) {
+                return array_values($v);
+            }
+        }
+        return [];
+    }
+}
+
+if (! function_exists('sap_ok')) {
+    /** True unless the response carries an explicit non-success Status. */
+    function sap_ok($data): bool
+    {
+        return ! (is_array($data) && isset($data['Status']) && strtolower((string) $data['Status']) !== 'success');
+    }
+}
+
 if (! function_exists('user_can')) {
     /**
      * Null-safe permission check for the current user.
