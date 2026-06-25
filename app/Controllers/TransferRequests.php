@@ -38,11 +38,30 @@ class TransferRequests extends BaseController
             $builder->where('transfer_requests.created_by', auth()->id());
         }
 
+        // Status summary (same scope as the list).
+        $scopeId = $isAdmin ? null : (int) auth()->id();
+        $count   = static function (?string $status) use ($scopeId) {
+            $m = new TransferRequestModel();
+            if ($scopeId !== null) {
+                $m->where('created_by', $scopeId);
+            }
+            if ($status !== null) {
+                $m->where('status', $status);
+            }
+            return $m->countAllResults();
+        };
+
         return $this->render('transfer_requests/index', [
             'title'    => lang('App.inventoryTransferRequest'),
             'requests' => $builder->paginate(20),
             'pager'    => $this->requests->pager,
             'isAdmin'  => $isAdmin,
+            'counts'   => [
+                'total'     => $count(null),
+                'open'      => $count('Open'),
+                'closed'    => $count('Closed'),
+                'cancelled' => $count('Cancelled'),
+            ],
         ]);
     }
 

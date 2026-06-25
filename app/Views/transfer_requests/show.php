@@ -1,37 +1,53 @@
-<?php $statusTheme = ['Open' => 'success', 'Closed' => 'secondary', 'Cancelled' => 'danger']; ?>
-<div class="card">
-	<div class="card-header d-flex justify-content-between align-items-center">
-		<h3 class="card-title mb-0"><i class="fas fa-right-left me-1"></i> <?= esc($req->doc_no) ?>
-			<span class="badge text-bg-<?= $statusTheme[$req->status] ?? 'secondary' ?> ms-2"><?= esc($req->status) ?></span>
-			<span class="badge text-bg-light ms-1"><?= esc($req->company) ?></span>
-		</h3>
-		<a href="<?= site_url('transfer-requests') ?>" class="btn btn-sm btn-secondary"><i class="fas fa-arrow-left me-1"></i> <?= lang('App.back') ?></a>
+<?php
+$statusTheme  = ['Open' => 'success', 'Closed' => 'secondary', 'Cancelled' => 'danger'];
+$companyTheme = ['SKY' => 'info', 'JOJO' => 'warning'];
+$fmtQty = static fn ($q) => rtrim(rtrim(number_format((float) $q, 3), '0'), '.');
+$totalQty = 0;
+foreach ($lines as $l) { $totalQty += (float) $l->quantity; }
+?>
+<div class="card shadow-sm">
+	<div class="card-header d-flex align-items-center flex-wrap gap-2">
+		<i class="fas fa-right-left text-body-secondary"></i>
+		<span class="fs-5 fw-semibold" style="font-family:var(--bs-font-monospace)"><?= esc($req->doc_no) ?></span>
+		<span class="badge text-bg-<?= $statusTheme[$req->status] ?? 'secondary' ?>"><?= esc($req->status) ?></span>
+		<span class="badge text-bg-<?= $companyTheme[$req->company] ?? 'secondary' ?>"><?= esc($req->company) ?></span>
+		<a href="<?= site_url('transfer-requests') ?>" class="btn btn-sm btn-secondary ms-auto"><i class="fas fa-arrow-left me-1"></i> <?= lang('App.back') ?></a>
 	</div>
 	<div class="card-body">
-		<div class="row">
-			<div class="col-lg-6">
-				<dl class="row mb-0">
-					<dt class="col-sm-4"><?= lang('App.itrBusinessPartner') ?></dt><dd class="col-sm-8"><?= esc($req->business_partner ?: '—') ?></dd>
-					<dt class="col-sm-4"><?= lang('App.itrName') ?></dt><dd class="col-sm-8"><?= esc($req->name ?: '—') ?></dd>
-					<dt class="col-sm-4"><?= lang('App.itrContactPerson') ?></dt><dd class="col-sm-8"><?= esc($req->contact_person ?: '—') ?></dd>
-					<dt class="col-sm-4"><?= lang('App.itrShipTo') ?></dt><dd class="col-sm-8"><?= nl2br(esc($req->ship_to ?: '—')) ?></dd>
-					<dt class="col-sm-4"><?= lang('App.itrPriceList') ?></dt><dd class="col-sm-8"><?= esc($req->price_list ?: '—') ?></dd>
-				</dl>
+		<div class="row g-4">
+			<!-- Business partner -->
+			<div class="col-lg-7">
+				<div class="text-uppercase text-body-secondary small fw-semibold mb-2"><i class="fas fa-user-tie me-1"></i> <?= lang('App.itrBusinessPartner') ?></div>
+				<table class="table table-sm mb-0">
+					<tr><td class="text-body-secondary" style="width:40%"><?= lang('App.itrBusinessPartner') ?></td><td><?= esc($req->business_partner ?: '—') ?></td></tr>
+					<tr><td class="text-body-secondary"><?= lang('App.itrName') ?></td><td><?= esc($req->name ?: '—') ?></td></tr>
+					<tr><td class="text-body-secondary"><?= lang('App.itrContactPerson') ?></td><td><?= esc($req->contact_person ?: '—') ?></td></tr>
+					<tr><td class="text-body-secondary"><?= lang('App.itrShipTo') ?></td><td><?= nl2br(esc($req->ship_to ?: '—')) ?></td></tr>
+					<tr><td class="text-body-secondary"><?= lang('App.itrPriceList') ?></td><td><?= esc($req->price_list ?: '—') ?></td></tr>
+				</table>
 			</div>
-			<div class="col-lg-6">
-				<dl class="row mb-0">
-					<dt class="col-sm-4"><?= lang('App.itrPostingDate') ?></dt><dd class="col-sm-8"><?= esc($req->posting_date ?: '—') ?></dd>
-					<dt class="col-sm-4"><?= lang('App.itrDueDate') ?></dt><dd class="col-sm-8"><?= esc($req->due_date ?: '—') ?></dd>
-					<dt class="col-sm-4"><?= lang('App.itrDocumentDate') ?></dt><dd class="col-sm-8"><?= esc($req->document_date ?: '—') ?></dd>
-					<dt class="col-sm-4 text-success"><?= lang('App.itrFromWh') ?></dt><dd class="col-sm-8"><?= esc($req->from_warehouse ?: '—') ?></dd>
-					<dt class="col-sm-4 text-success"><?= lang('App.itrToWh') ?></dt><dd class="col-sm-8"><?= esc($req->to_warehouse ?: '—') ?></dd>
-				</dl>
+			<!-- Document panel -->
+			<div class="col-lg-5">
+				<div class="border rounded p-3 bg-body-secondary">
+					<div class="text-uppercase text-body-secondary small fw-semibold mb-2"><i class="fas fa-file-invoice me-1"></i> <?= lang('App.itrDocNo') ?></div>
+					<table class="table table-sm mb-3">
+						<tr><td class="text-body-secondary" style="width:45%"><?= lang('App.itrPostingDate') ?></td><td class="text-end"><?= esc($req->posting_date ?: '—') ?></td></tr>
+						<tr><td class="text-body-secondary"><?= lang('App.itrDueDate') ?></td><td class="text-end"><?= esc($req->due_date ?: '—') ?></td></tr>
+						<tr><td class="text-body-secondary"><?= lang('App.itrDocumentDate') ?></td><td class="text-end"><?= esc($req->document_date ?: '—') ?></td></tr>
+						<tr><td class="text-body-secondary"><?= lang('App.itrSapDoc') ?></td><td class="text-end"><?= $req->sap_doc_no ? esc($req->sap_doc_no) : '<span class="text-body-secondary">—</span>' ?></td></tr>
+					</table>
+					<div class="border rounded p-2 bg-body d-flex align-items-center gap-2">
+						<div class="flex-fill"><div class="small text-success"><i class="fas fa-warehouse me-1"></i><?= lang('App.itrFromWh') ?></div><div class="fw-semibold"><?= esc($req->from_warehouse ?: '—') ?></div></div>
+						<i class="fas fa-arrow-right text-success"></i>
+						<div class="flex-fill text-end"><div class="small text-success"><?= lang('App.itrToWh') ?><i class="fas fa-warehouse ms-1"></i></div><div class="fw-semibold"><?= esc($req->to_warehouse ?: '—') ?></div></div>
+					</div>
+				</div>
 			</div>
 		</div>
 
-		<h5 class="mt-3 mb-2"><i class="fas fa-list me-1"></i> <?= lang('App.itrContents') ?></h5>
-		<div class="table-responsive">
-			<table class="table table-bordered table-sm align-middle">
+		<h5 class="mt-4 mb-2"><i class="fas fa-list me-1"></i> <?= lang('App.itrContents') ?></h5>
+		<div class="table-responsive border rounded">
+			<table class="table table-striped table-sm align-middle mb-0">
 				<thead class="table-light">
 					<tr>
 						<th style="width:36px">#</th>
@@ -51,23 +67,30 @@
 							<td><?= esc($l->item_name) ?></td>
 							<td><?= esc($l->from_warehouse ?: '—') ?></td>
 							<td><?= esc($l->to_warehouse ?: '—') ?></td>
-							<td class="text-end"><?= esc(rtrim(rtrim(number_format((float) $l->quantity, 3), '0'), '.')) ?></td>
+							<td class="text-end"><?= esc($fmtQty($l->quantity)) ?></td>
 							<td><?= esc($l->uom ?: '—') ?></td>
 						</tr>
 					<?php endforeach; ?>
 				</tbody>
+				<tfoot class="table-light fw-semibold">
+					<tr>
+						<td colspan="5" class="text-end"><?= lang('App.itrQuantity') ?></td>
+						<td class="text-end"><?= esc($fmtQty($totalQty)) ?></td>
+						<td></td>
+					</tr>
+				</tfoot>
 			</table>
 		</div>
 
 		<?php if ($req->journal_remarks || $req->remarks): ?>
-			<div class="row mt-2">
+			<div class="row mt-3">
 				<div class="col-md-6"><strong><?= lang('App.itrJournalRemarks') ?>:</strong> <?= esc($req->journal_remarks ?: '—') ?></div>
 				<div class="col-md-6"><strong><?= lang('App.itrRemarks') ?>:</strong> <?= esc($req->remarks ?: '—') ?></div>
 			</div>
 		<?php endif; ?>
 	</div>
-	<div class="card-footer">
-		<form action="<?= site_url('transfer-requests/delete/' . $req->id) ?>" method="post" class="d-inline" onsubmit="return confirm('<?= esc(lang('App.confirmDelete'), 'js') ?>');">
+	<div class="card-footer d-flex">
+		<form action="<?= site_url('transfer-requests/delete/' . $req->id) ?>" method="post" class="ms-auto" onsubmit="return confirm('<?= esc(lang('App.confirmDelete'), 'js') ?>');">
 			<?= csrf_field() ?>
 			<button type="submit" class="btn btn-outline-danger"><i class="fas fa-trash me-1"></i> <?= lang('App.delete') ?></button>
 		</form>
