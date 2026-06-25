@@ -156,8 +156,13 @@ class Auth extends ShieldAuth
      * Allow Registration
      * --------------------------------------------------------------------
      * Determines whether users can register for the site.
+     *
+     * Internal admin portal: self-registration is DISABLED. Accounts are
+     * created only by an admin via /users. Leaving this true let anonymous
+     * visitors register and immediately reach the back office as `viewer`
+     * (which holds admin.access / users.view / roles.view).
      */
-    public bool $allowRegistration = true;
+    public bool $allowRegistration = false;
 
     /**
      * --------------------------------------------------------------------

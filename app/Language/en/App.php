@@ -10,6 +10,8 @@ return [
     'itrNew'            => 'New Transfer Request',
     'itrEmpty'         => 'No transfer requests yet',
     'itrNoLines'       => 'Please add at least one line (item with quantity > 0)',
+    'itrBadWarehouse'  => 'Warehouse "{0}" does not belong to company {1}',
+    'itrBadItem'       => 'Item "{0}" does not belong to company {1}',
     'itrCreated'       => 'Transfer request {0} created',
     'itrDeleted'       => 'Transfer request {0} deleted',
     'itrStatusOpen'    => 'Open',

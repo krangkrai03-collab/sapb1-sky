@@ -95,6 +95,13 @@ class TransferRequests extends BaseController
             return redirect()->back()->withInput()->with('error', lang('App.itrNoLines'));
         }
 
+        // Server-side company guard: the form filters warehouses/items by company
+        // client-side, but a crafted POST could otherwise mix SKY/JOJO data or
+        // reference master records that don't exist. Reject before persisting.
+        if (($refError = $this->companyRefError($company, $rawLines)) !== null) {
+            return redirect()->back()->withInput()->with('error', $refError);
+        }
+
         // Running number is taken from the DB per company + posting-date month.
         $docNo = $this->requests->nextDocNo($company, $this->ymFromDate($this->request->getPost('posting_date')));
         $this->requests->insert([
@@ -219,6 +226,51 @@ class TransferRequests extends BaseController
     private function canAccess(object $req): bool
     {
         return auth()->user()->inGroup('superadmin') || (int) $req->created_by === (int) auth()->id();
+    }
+
+    /**
+     * Every warehouse and item referenced by the document (header + lines) must
+     * belong to the selected company; items must exist in that company's master.
+     * Returns the first violation message, or null when everything is in scope.
+     */
+    private function companyRefError(string $company, array $rawLines): ?string
+    {
+        $validWh = [];
+        foreach ($this->warehouses->where('company', $company)->findAll() as $w) {
+            $validWh[(string) $w->code] = true;
+        }
+        $validItem = [];
+        foreach ($this->items->where('company', $company)->findAll() as $it) {
+            $validItem[(string) $it->item_code] = true;
+        }
+
+        $badWarehouse = static function (?string $code) use ($validWh): bool {
+            $code = trim((string) $code);
+            return $code !== '' && ! isset($validWh[$code]);
+        };
+
+        // Header warehouses (optional, but must match the company when present).
+        foreach (['from_warehouse', 'to_warehouse'] as $field) {
+            $code = trim((string) $this->request->getPost($field));
+            if ($badWarehouse($code)) {
+                return lang('App.itrBadWarehouse', [$code, $company]);
+            }
+        }
+
+        // Line items must exist in the company master; line warehouses must match.
+        foreach ($rawLines as $line) {
+            if (! isset($validItem[$line['item_code']])) {
+                return lang('App.itrBadItem', [$line['item_code'], $company]);
+            }
+            if ($badWarehouse($line['from_warehouse'])) {
+                return lang('App.itrBadWarehouse', [$line['from_warehouse'], $company]);
+            }
+            if ($badWarehouse($line['to_warehouse'])) {
+                return lang('App.itrBadWarehouse', [$line['to_warehouse'], $company]);
+            }
+        }
+
+        return null;
     }
 
     /** 'ym' (e.g. '2606') from a Y-m-d date, falling back to the current month. */

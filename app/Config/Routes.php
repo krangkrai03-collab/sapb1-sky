@@ -3,8 +3,12 @@
 use CodeIgniter\Router\RouteCollection;
 
 /** @var RouteCollection $routes */
-// Shield auth routes (/logout, /register, ...) — login handled by our controller.
-service('auth')->routes($routes, ['except' => ['login']]);
+// Shield auth routes (/logout, magic-link, ...) — login handled by our controller.
+// Self-registration is removed entirely: this is an internal admin portal, so the
+// 'register' route group is never published (accounts are created by an admin via
+// /users). Disabling Auth::$allowRegistration alone leaves /register routed; excluding
+// the group here makes GET/POST /register a hard 404 at the router.
+service('auth')->routes($routes, ['except' => ['login', 'register']]);
 
 // Quick UI language switch (per session)
 $routes->get('locale/(:segment)', 'Locale::set/$1');

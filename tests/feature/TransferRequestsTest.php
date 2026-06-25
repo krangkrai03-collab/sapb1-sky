@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\UserModel;
 use App\Models\TransferRequestModel;
 use App\Models\TransferRequestItemModel;
+use App\Models\WarehouseModel;
+use App\Models\ItemModel;
 use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Shield\Test\AuthenticationTesting;
 use CodeIgniter\Test\CIUnitTestCase;
@@ -46,8 +48,21 @@ final class TransferRequestsTest extends CIUnitTestCase
         return $user;
     }
 
+    /** Seed the warehouses/items master used by createRequest() for a company. */
+    private function seedMaster(string $company): void
+    {
+        $wh = new WarehouseModel();
+        foreach (['WH1', 'WH2'] as $code) {
+            $wh->insert(['company' => $company, 'code' => $code, 'name' => $code]);
+        }
+        (new ItemModel())->insert([
+            'company' => $company, 'item_code' => 'ITM-1', 'item_name' => 'Item 1', 'default_warehouse' => 'WH1',
+        ]);
+    }
+
     private function createRequest(User $actor, string $company): void
     {
+        $this->seedMaster($company);
         $this->actingAs($actor)->post('transfer-requests/create', [
             'company'      => $company,
             'posting_date' => '2026-06-15',
@@ -80,6 +95,40 @@ final class TransferRequestsTest extends CIUnitTestCase
         $this->actingAs($viewer)->post('transfer-requests/create', [
             'company'      => 'SKY',
             'posting_date' => '2026-06-15',
+        ])->assertRedirect();
+
+        $this->assertSame(0, (new TransferRequestModel())->countAllResults());
+    }
+
+    public function testCrossCompanyWarehouseRejected(): void
+    {
+        $viewer = $this->makeUser('viewer', 'viewer');
+        $this->seedMaster('SKY'); // WH1/WH2 + ITM-1 belong to SKY only
+
+        // SKY document, but the line references a warehouse that isn't in SKY's master.
+        $this->actingAs($viewer)->post('transfer-requests/create', [
+            'company'      => 'SKY',
+            'posting_date' => '2026-06-15',
+            'items'        => [
+                ['item_code' => 'ITM-1', 'quantity' => '5', 'from_warehouse' => 'JOJO-WH', 'to_warehouse' => 'WH2', 'uom' => 'PCS'],
+            ],
+        ])->assertRedirect();
+
+        $this->assertSame(0, (new TransferRequestModel())->countAllResults());
+    }
+
+    public function testUnknownItemRejected(): void
+    {
+        $viewer = $this->makeUser('viewer', 'viewer');
+        $this->seedMaster('SKY');
+
+        // Item code that does not exist in the company master must be refused.
+        $this->actingAs($viewer)->post('transfer-requests/create', [
+            'company'      => 'SKY',
+            'posting_date' => '2026-06-15',
+            'items'        => [
+                ['item_code' => 'GHOST-ITEM', 'quantity' => '5', 'from_warehouse' => 'WH1', 'to_warehouse' => 'WH2', 'uom' => 'PCS'],
+            ],
         ])->assertRedirect();
 
         $this->assertSame(0, (new TransferRequestModel())->countAllResults());
