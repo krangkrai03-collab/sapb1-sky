@@ -203,6 +203,7 @@ return [
     'syncFailed'       => 'Sync [{0}] from SAP failed — check the Web API URL/connection',
 
     // business partner
+    'masterData'          => 'Master Data',
     'businessPartners'    => 'Business Partner',
     'bpCode'              => 'BP Code',
     'bpName'              => 'BP Name',

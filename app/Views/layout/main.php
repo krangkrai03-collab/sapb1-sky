@@ -74,9 +74,18 @@
 					<li class="nav-item"><a href="<?= site_url('logs') ?>" class="nav-link <?= active_menu('logs') ?>"><i class="nav-icon fas fa-history"></i><p><?= lang('App.logs') ?></p></a></li>
 					<?php endif; ?>
 					<?php if (user_can('settings.manage')): ?>
-					<li class="nav-item"><a href="<?= site_url('business-partners') ?>" class="nav-link <?= active_menu('business-partners') ?>"><i class="nav-icon fas fa-handshake"></i><p><?= lang('App.businessPartners') ?></p></a></li>
-					<li class="nav-item"><a href="<?= site_url('items') ?>" class="nav-link <?= active_menu('items') ?>"><i class="nav-icon fas fa-boxes-stacked"></i><p><?= lang('App.itemMaster') ?></p></a></li>
-					<li class="nav-item"><a href="<?= site_url('warehouses') ?>" class="nav-link <?= active_menu('warehouses') ?>"><i class="nav-icon fas fa-warehouse"></i><p><?= lang('App.warehouses') ?></p></a></li>
+					<?php $masterOpen = active_menu('business-partners') || active_menu('items') || active_menu('warehouses'); ?>
+					<li class="nav-item <?= $masterOpen ? 'menu-open' : '' ?>">
+						<a href="#" class="nav-link <?= $masterOpen ? 'active' : '' ?>">
+							<i class="nav-icon fas fa-database"></i>
+							<p><?= lang('App.masterData') ?> <i class="nav-arrow fas fa-angle-right"></i></p>
+						</a>
+						<ul class="nav nav-treeview">
+							<li class="nav-item"><a href="<?= site_url('business-partners') ?>" class="nav-link <?= active_menu('business-partners') ?>"><i class="nav-icon fas fa-handshake"></i><p><?= lang('App.businessPartners') ?></p></a></li>
+							<li class="nav-item"><a href="<?= site_url('items') ?>" class="nav-link <?= active_menu('items') ?>"><i class="nav-icon fas fa-boxes-stacked"></i><p><?= lang('App.itemMaster') ?></p></a></li>
+							<li class="nav-item"><a href="<?= site_url('warehouses') ?>" class="nav-link <?= active_menu('warehouses') ?>"><i class="nav-icon fas fa-warehouse"></i><p><?= lang('App.warehouses') ?></p></a></li>
+						</ul>
+					</li>
 					<li class="nav-item"><a href="<?= site_url('settings') ?>" class="nav-link <?= active_menu('settings') ?>"><i class="nav-icon fas fa-cog"></i><p><?= lang('App.settings') ?></p></a></li>
 					<?php endif; ?>
 				</ul>

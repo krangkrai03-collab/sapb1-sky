@@ -203,6 +203,7 @@ return [
     'syncFailed'       => 'ซิงก์ [{0}] จาก SAP ไม่สำเร็จ — ตรวจสอบ URL Web API/การเชื่อมต่อ',
 
     // business partner
+    'masterData'          => 'ข้อมูลหลัก (Master Data)',
     'businessPartners'    => 'Business Partner',
     'bpCode'              => 'รหัสคู่ค้า',
     'bpName'              => 'ชื่อคู่ค้า',
