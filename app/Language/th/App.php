@@ -172,6 +172,7 @@ return [
     'endpointSection'=> 'Endpoint ย่อย (ต่อบริษัท)',
     'endpointHint'   => 'กำหนด path ย่อยของแต่ละการทำงาน เช่น ItemMaster → /item',
     'endpointName'   => 'ชื่อการทำงาน',
+    'endpointMethod' => 'Method',
     'endpointPath'   => 'Path',
     'noEndpoints'    => 'ยังไม่มี endpoint',
     'endpointAdded'  => 'เพิ่ม endpoint แล้ว',

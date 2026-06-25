@@ -22,6 +22,7 @@ class ApiEndpoints extends BaseController
         $rules     = [
             'company' => ['label' => lang('App.fCompany'), 'rules' => "required|in_list[{$companies}]"],
             'name'    => ['label' => lang('App.endpointName'), 'rules' => 'required|max_length[100]'],
+            'method'  => ['label' => lang('App.endpointMethod'), 'rules' => 'required|in_list[GET,POST]'],
             'path'    => ['label' => lang('App.endpointPath'), 'rules' => 'required|max_length[255]'],
         ];
         if (! $this->validate($rules)) {
@@ -39,6 +40,7 @@ class ApiEndpoints extends BaseController
         $this->endpoints->insert([
             'company'    => $company,
             'name'       => $name,
+            'method'     => strtoupper((string) $this->request->getPost('method')) === 'POST' ? 'POST' : 'GET',
             'path'       => $path,
             'created_at' => date('Y-m-d H:i:s'),
         ]);

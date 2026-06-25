@@ -77,8 +77,9 @@ class Warehouses extends BaseController
         }
 
         try {
+            $method   = strtoupper($endpoint->method ?? 'GET') === 'POST' ? 'POST' : 'GET';
             $client   = service('curlrequest', $options);
-            $response = $client->get($url);
+            $response = $client->request($method, $url);
             $data     = json_decode((string) $response->getBody(), true);
             if (! is_array($data)) {
                 throw new \RuntimeException('invalid response');

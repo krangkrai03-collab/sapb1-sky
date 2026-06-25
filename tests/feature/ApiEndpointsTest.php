@@ -49,18 +49,19 @@ final class ApiEndpointsTest extends CIUnitTestCase
     {
         $admin = $this->makeUser('admin', 'superadmin');
         $this->actingAs($admin)->post('api-endpoints/create', [
-            'company' => 'SKY', 'name' => 'Warehouses', 'path' => '/warehouses',
+            'company' => 'SKY', 'name' => 'Warehouses', 'method' => 'GET', 'path' => '/warehouses',
         ])->assertRedirectTo('/settings');
 
         $row = (new ApiEndpointModel())->where('company', 'SKY')->where('name', 'Warehouses')->first();
         $this->assertNotNull($row);
         $this->assertSame('/warehouses', $row->path);
+        $this->assertSame('GET', $row->method);
     }
 
     public function testDuplicateNameSameCompanyIsRejected(): void
     {
         $admin = $this->makeUser('admin', 'superadmin');
-        $payload = ['company' => 'SKY', 'name' => 'ItemMaster', 'path' => '/item'];
+        $payload = ['company' => 'SKY', 'name' => 'ItemMaster', 'method' => 'GET', 'path' => '/item'];
         $this->actingAs($admin)->post('api-endpoints/create', $payload);
         $this->actingAs($admin)->post('api-endpoints/create', $payload);
 
@@ -70,8 +71,8 @@ final class ApiEndpointsTest extends CIUnitTestCase
     public function testSameNameDifferentCompanyAllowed(): void
     {
         $admin = $this->makeUser('admin', 'superadmin');
-        $this->actingAs($admin)->post('api-endpoints/create', ['company' => 'SKY', 'name' => 'ItemMaster', 'path' => '/item']);
-        $this->actingAs($admin)->post('api-endpoints/create', ['company' => 'JOJO', 'name' => 'ItemMaster', 'path' => '/item']);
+        $this->actingAs($admin)->post('api-endpoints/create', ['company' => 'SKY', 'name' => 'ItemMaster', 'method' => 'GET', 'path' => '/item']);
+        $this->actingAs($admin)->post('api-endpoints/create', ['company' => 'JOJO', 'name' => 'ItemMaster', 'method' => 'POST', 'path' => '/item']);
 
         $this->assertSame(2, (new ApiEndpointModel())->where('name', 'ItemMaster')->countAllResults());
     }

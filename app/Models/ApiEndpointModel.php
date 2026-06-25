@@ -10,5 +10,5 @@ class ApiEndpointModel extends Model
     protected $primaryKey    = 'id';
     protected $returnType    = 'object';
     protected $useTimestamps = false;
-    protected $allowedFields = ['company', 'name', 'path', 'created_at'];
+    protected $allowedFields = ['company', 'name', 'method', 'path', 'created_at'];
 }

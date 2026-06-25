@@ -172,6 +172,7 @@ return [
     'endpointSection'=> 'Sub-endpoints (per company)',
     'endpointHint'   => 'Define a sub-path per function, e.g. ItemMaster → /item',
     'endpointName'   => 'Function name',
+    'endpointMethod' => 'Method',
     'endpointPath'   => 'Path',
     'noEndpoints'    => 'No endpoints yet',
     'endpointAdded'  => 'Endpoint added',

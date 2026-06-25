@@ -163,7 +163,7 @@
 										<li class="list-group-item text-center text-body-secondary py-3"><?= lang('App.noEndpoints') ?></li>
 									<?php else: foreach ($list as $e): ?>
 										<li class="list-group-item d-flex justify-content-between align-items-center">
-											<span><strong><?= esc($e->name) ?></strong> <code class="ms-1"><?= esc($e->path) ?></code></span>
+											<span><span class="badge text-bg-<?= ($e->method ?? 'GET') === 'POST' ? 'success' : 'secondary' ?> me-1"><?= esc($e->method ?? 'GET') ?></span><strong><?= esc($e->name) ?></strong> <code class="ms-1"><?= esc($e->path) ?></code></span>
 											<form action="<?= site_url('api-endpoints/delete/' . $e->id) ?>" method="post" onsubmit="return confirm('<?= esc(lang('App.confirmDelete'), 'js') ?>');">
 												<?= csrf_field() ?>
 												<button type="submit" class="btn btn-sm btn-outline-danger" title="<?= esc(lang('App.delete'), 'attr') ?>"><i class="fas fa-trash"></i></button>
@@ -176,7 +176,8 @@
 										<?= csrf_field() ?>
 										<input type="hidden" name="company" value="<?= esc($ac, 'attr') ?>">
 										<div class="col-12"><input type="text" name="name" class="form-control form-control-sm" placeholder="<?= esc(lang('App.endpointName'), 'attr') ?> (ItemMaster)" maxlength="100" required></div>
-										<div class="col-12"><input type="text" name="path" class="form-control form-control-sm" placeholder="<?= esc(lang('App.endpointPath'), 'attr') ?> (/item)" maxlength="255" required></div>
+										<div class="col-4"><select name="method" class="form-select form-select-sm"><option value="GET">GET</option><option value="POST">POST</option></select></div>
+										<div class="col-8"><input type="text" name="path" class="form-control form-control-sm" placeholder="<?= esc(lang('App.endpointPath'), 'attr') ?> (/item)" maxlength="255" required></div>
 										<div class="col-12 d-grid"><button type="submit" class="btn btn-sm btn-<?= esc($theme, 'attr') ?>"><i class="fas fa-plus me-1"></i> <?= lang('App.add') ?></button></div>
 									</form>
 								</div>
