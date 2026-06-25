@@ -151,11 +151,60 @@ class TransferRequests extends BaseController
         ]);
     }
 
+    /** Push the request to SAP (manual, with confirmation). Idempotent. */
+    public function send($id)
+    {
+        $req = $this->requests->find((int) $id);
+        if ($req === null || ! $this->canAccess($req)) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+        // Only un-sent documents may be sent (prevents double-posting).
+        if (! in_array($req->sync_status, ['pending', 'failed'], true)) {
+            return redirect()->to('transfer-requests/show/' . $id)->with('error', lang('App.sapAlreadySent'));
+        }
+
+        $this->requests->update($req->id, ['sync_status' => 'sending']);
+        $lines  = $this->lines->where('request_id', $req->id)->orderBy('line_no', 'asc')->findAll();
+        $result = $this->pushToSap($req, $lines);
+
+        if ($result['ok']) {
+            $this->requests->update($req->id, [
+                'sync_status' => 'sent',
+                'sap_doc_no'  => $result['sap_doc_no'],
+                'sync_error'  => null,
+                'synced_at'   => date('Y-m-d H:i:s'),
+            ]);
+            log_activity('itr.sap.send', "ส่ง {$req->doc_no} เข้า SAP → {$result['sap_doc_no']}");
+            return redirect()->to('transfer-requests/show/' . $id)->with('message', lang('App.sapSent', [$result['sap_doc_no']]));
+        }
+
+        $this->requests->update($req->id, ['sync_status' => 'failed', 'sync_error' => $result['error']]);
+        log_activity('itr.sap.fail', "ส่ง {$req->doc_no} เข้า SAP ไม่สำเร็จ");
+        return redirect()->to('transfer-requests/show/' . $id)->with('error', lang('App.sapFailed', [$result['error']]));
+    }
+
+    /**
+     * Post the document to SAP Business One and return its DocNum.
+     *
+     * STUB — replace with the real SAP call (Service Layer
+     * `POST /b1s/v1/InventoryTransferRequests`, or DI). Map header + lines,
+     * send with auth, and return ['ok'=>bool, 'sap_doc_no'=>string, 'error'=>string].
+     * For now it simulates a successful post so the workflow can be exercised.
+     */
+    private function pushToSap(object $req, array $lines): array
+    {
+        return ['ok' => true, 'sap_doc_no' => 'SAP-' . $req->doc_no, 'error' => ''];
+    }
+
     public function delete($id)
     {
         $req = $this->requests->find((int) $id);
         if ($req === null || ! $this->canAccess($req)) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+        // Don't delete documents already posted to SAP.
+        if ($req->sync_status === 'sent') {
+            return redirect()->to('transfer-requests/show/' . $id)->with('error', lang('App.sapCannotDeleteSent'));
         }
 
         $this->lines->where('request_id', (int) $id)->delete();

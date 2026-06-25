@@ -1,6 +1,9 @@
 <?php
 $statusTheme  = ['Open' => 'success', 'Closed' => 'secondary', 'Cancelled' => 'danger'];
 $companyTheme = ['SKY' => 'info', 'JOJO' => 'warning'];
+$syncTheme    = ['pending' => 'secondary', 'sending' => 'info', 'sent' => 'success', 'failed' => 'danger'];
+$syncLabel    = ['pending' => lang('App.syncPending'), 'sending' => lang('App.syncSending'), 'sent' => lang('App.syncSent'), 'failed' => lang('App.syncFailed')];
+$sync         = $req->sync_status ?: 'pending';
 $fmtQty = static fn ($q) => rtrim(rtrim(number_format((float) $q, 3), '0'), '.');
 $totalQty = 0;
 foreach ($lines as $l) { $totalQty += (float) $l->quantity; }
@@ -11,6 +14,7 @@ foreach ($lines as $l) { $totalQty += (float) $l->quantity; }
 		<span class="fs-5 fw-semibold" style="font-family:var(--bs-font-monospace)"><?= esc($req->doc_no) ?></span>
 		<span class="badge text-bg-<?= $statusTheme[$req->status] ?? 'secondary' ?>"><?= esc($req->status) ?></span>
 		<span class="badge text-bg-<?= $companyTheme[$req->company] ?? 'secondary' ?>"><?= esc($req->company) ?></span>
+		<span class="badge text-bg-<?= $syncTheme[$sync] ?? 'secondary' ?>"><i class="fas fa-cloud-arrow-up me-1"></i><?= esc($syncLabel[$sync] ?? $sync) ?></span>
 		<a href="<?= site_url('transfer-requests') ?>" class="btn btn-sm btn-secondary ms-auto"><i class="fas fa-arrow-left me-1"></i> <?= lang('App.back') ?></a>
 	</div>
 	<div class="card-body">
@@ -89,10 +93,47 @@ foreach ($lines as $l) { $totalQty += (float) $l->quantity; }
 			</div>
 		<?php endif; ?>
 	</div>
-	<div class="card-footer d-flex">
-		<form action="<?= site_url('transfer-requests/delete/' . $req->id) ?>" method="post" class="ms-auto" onsubmit="return confirm('<?= esc(lang('App.confirmDelete'), 'js') ?>');">
-			<?= csrf_field() ?>
-			<button type="submit" class="btn btn-outline-danger"><i class="fas fa-trash me-1"></i> <?= lang('App.delete') ?></button>
-		</form>
+	<div class="card-footer d-flex align-items-center gap-2 flex-wrap">
+		<?php if ($sync === 'sent'): ?>
+			<span class="badge text-bg-success py-2"><i class="fas fa-check-circle me-1"></i> <?= lang('App.syncSent') ?> · <?= esc($req->sap_doc_no) ?></span>
+		<?php else: ?>
+			<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#sendSapModal">
+				<i class="fas fa-paper-plane me-1"></i> <?= $sync === 'failed' ? lang('App.sapRetry') : lang('App.sapSend') ?>
+			</button>
+			<?php if ($sync === 'failed' && $req->sync_error): ?>
+				<span class="text-danger small"><i class="fas fa-triangle-exclamation me-1"></i><?= esc($req->sync_error) ?></span>
+			<?php endif; ?>
+		<?php endif; ?>
+
+		<?php if ($sync !== 'sent'): ?>
+			<form action="<?= site_url('transfer-requests/delete/' . $req->id) ?>" method="post" class="ms-auto" onsubmit="return confirm('<?= esc(lang('App.confirmDelete'), 'js') ?>');">
+				<?= csrf_field() ?>
+				<button type="submit" class="btn btn-outline-danger"><i class="fas fa-trash me-1"></i> <?= lang('App.delete') ?></button>
+			</form>
+		<?php endif; ?>
 	</div>
 </div>
+
+<?php if ($sync !== 'sent'): ?>
+<div class="modal fade" id="sendSapModal" tabindex="-1" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title"><i class="fas fa-paper-plane me-1"></i> <?= lang('App.sapConfirmTitle') ?></h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				<?= lang('App.sapConfirmBody') ?>
+				<div class="mt-2 fw-semibold" style="font-family:var(--bs-font-monospace)"><?= esc($req->doc_no) ?></div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= lang('App.no') ?></button>
+				<form action="<?= site_url('transfer-requests/send/' . $req->id) ?>" method="post">
+					<?= csrf_field() ?>
+					<button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane me-1"></i> <?= lang('App.yesSend') ?></button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<?php endif; ?>

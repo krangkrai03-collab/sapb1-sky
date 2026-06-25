@@ -120,6 +120,30 @@ final class TransferRequestsTest extends CIUnitTestCase
         $this->actingAs($admin)->get('transfer-requests/show/' . $req->id)->assertStatus(200);
     }
 
+    public function testSendToSapMarksSynced(): void
+    {
+        $viewer = $this->makeUser('viewer', 'viewer');
+        $this->createRequest($viewer, 'SKY');
+        $req = (new TransferRequestModel())->orderBy('id', 'DESC')->first();
+
+        $this->actingAs($viewer)->post('transfer-requests/send/' . $req->id)->assertRedirect();
+
+        $fresh = (new TransferRequestModel())->find($req->id);
+        $this->assertSame('sent', $fresh->sync_status);
+        $this->assertNotEmpty($fresh->sap_doc_no);
+    }
+
+    public function testCannotDeleteRequestAlreadySentToSap(): void
+    {
+        $viewer = $this->makeUser('viewer', 'viewer');
+        $this->createRequest($viewer, 'SKY');
+        $req = (new TransferRequestModel())->orderBy('id', 'DESC')->first();
+        $this->actingAs($viewer)->post('transfer-requests/send/' . $req->id);
+
+        $this->actingAs($viewer)->post('transfer-requests/delete/' . $req->id)->assertRedirect();
+        $this->assertNotNull((new TransferRequestModel())->find($req->id));
+    }
+
     public function testDocNoPreviewEndpointReturnsJson(): void
     {
         $viewer = $this->makeUser('viewer', 'viewer');

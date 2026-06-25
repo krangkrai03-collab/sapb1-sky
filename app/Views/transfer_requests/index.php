@@ -1,6 +1,8 @@
 <?php
 $statusTheme  = ['Open' => 'success', 'Closed' => 'secondary', 'Cancelled' => 'danger'];
 $companyTheme = ['SKY' => 'info', 'JOJO' => 'warning'];
+$syncTheme    = ['pending' => 'secondary', 'sending' => 'info', 'sent' => 'success', 'failed' => 'danger'];
+$syncLabel    = ['pending' => lang('App.syncPending'), 'sending' => lang('App.syncSending'), 'sent' => lang('App.syncSent'), 'failed' => lang('App.syncFailed')];
 ?>
 <div class="card shadow-sm">
 	<div class="card-header d-flex align-items-center">
@@ -34,12 +36,13 @@ $companyTheme = ['SKY' => 'info', 'JOJO' => 'warning'];
 					<th><?= lang('App.itrPostingDate') ?></th>
 					<?php if ($isAdmin): ?><th><?= lang('App.itrCreatedBy') ?></th><?php endif; ?>
 					<th><?= lang('App.status') ?></th>
+					<th><?= lang('App.syncStatus') ?></th>
 					<th class="text-end"><?= lang('App.actions') ?></th>
 				</tr>
 			</thead>
 			<tbody>
 				<?php if (empty($requests)): ?>
-					<tr><td colspan="<?= $isAdmin ? 8 : 7 ?>" class="text-center text-body-secondary py-4"><i class="fas fa-inbox me-1"></i> <?= lang('App.itrEmpty') ?></td></tr>
+					<tr><td colspan="<?= $isAdmin ? 9 : 8 ?>" class="text-center text-body-secondary py-4"><i class="fas fa-inbox me-1"></i> <?= lang('App.itrEmpty') ?></td></tr>
 				<?php else: foreach ($requests as $r): ?>
 					<tr>
 						<td><a href="<?= site_url('transfer-requests/show/' . $r->id) ?>" class="fw-semibold text-decoration-none" style="font-family:var(--bs-font-monospace)"><?= esc($r->doc_no) ?></a></td>
@@ -49,6 +52,8 @@ $companyTheme = ['SKY' => 'info', 'JOJO' => 'warning'];
 						<td><?= esc($r->posting_date ?: '—') ?></td>
 						<?php if ($isAdmin): ?><td><i class="fas fa-user-circle me-1 text-body-secondary"></i><?= esc($r->created_by_name ?: '—') ?></td><?php endif; ?>
 						<td><span class="badge text-bg-<?= $statusTheme[$r->status] ?? 'secondary' ?>"><?= esc($r->status) ?></span></td>
+						<?php $rs = $r->sync_status ?: 'pending'; ?>
+						<td><span class="badge text-bg-<?= $syncTheme[$rs] ?? 'secondary' ?>"><?= esc($syncLabel[$rs] ?? $rs) ?></span></td>
 						<td class="text-end"><a href="<?= site_url('transfer-requests/show/' . $r->id) ?>" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></a></td>
 					</tr>
 				<?php endforeach; endif; ?>

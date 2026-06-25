@@ -23,6 +23,7 @@ $routes->group('', ['filter' => 'perm:admin.access'], static function ($routes) 
     $routes->get('transfer-requests/next-doc-no', 'TransferRequests::docNoPreview');
     $routes->post('transfer-requests/create', 'TransferRequests::store');
     $routes->get('transfer-requests/show/(:num)', 'TransferRequests::show/$1');
+    $routes->post('transfer-requests/send/(:num)', 'TransferRequests::send/$1');
     $routes->post('transfer-requests/delete/(:num)', 'TransferRequests::delete/$1');
 });
 

@@ -11,7 +11,8 @@ class TransferRequestModel extends Model
     protected $returnType    = 'object';
     protected $useTimestamps = false;
     protected $allowedFields = [
-        'doc_no', 'sap_doc_no', 'company', 'status', 'business_partner', 'name', 'contact_person',
+        'doc_no', 'sap_doc_no', 'company', 'status', 'sync_status', 'sync_error', 'synced_at',
+        'business_partner', 'name', 'contact_person',
         'ship_to', 'price_list', 'posting_date', 'due_date', 'document_date',
         'from_warehouse', 'to_warehouse', 'journal_remarks', 'remarks',
         'created_by', 'created_at', 'updated_at',
