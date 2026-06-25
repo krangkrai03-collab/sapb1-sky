@@ -28,6 +28,7 @@ $companyTheme = ['SKY' => 'info', 'JOJO' => 'warning'];
 			<thead>
 				<tr>
 					<th><?= lang('App.itrDocNo') ?></th>
+					<th><?= lang('App.itrSapDoc') ?></th>
 					<th><?= lang('App.fCompany') ?></th>
 					<th><?= lang('App.itrFromWh') ?> → <?= lang('App.itrToWh') ?></th>
 					<th><?= lang('App.itrPostingDate') ?></th>
@@ -38,13 +39,11 @@ $companyTheme = ['SKY' => 'info', 'JOJO' => 'warning'];
 			</thead>
 			<tbody>
 				<?php if (empty($requests)): ?>
-					<tr><td colspan="<?= $isAdmin ? 7 : 6 ?>" class="text-center text-body-secondary py-4"><i class="fas fa-inbox me-1"></i> <?= lang('App.itrEmpty') ?></td></tr>
+					<tr><td colspan="<?= $isAdmin ? 8 : 7 ?>" class="text-center text-body-secondary py-4"><i class="fas fa-inbox me-1"></i> <?= lang('App.itrEmpty') ?></td></tr>
 				<?php else: foreach ($requests as $r): ?>
 					<tr>
-						<td>
-							<a href="<?= site_url('transfer-requests/show/' . $r->id) ?>" class="fw-semibold text-decoration-none" style="font-family:var(--bs-font-monospace)"><?= esc($r->doc_no) ?></a>
-							<?php if ($r->sap_doc_no): ?><div class="small text-body-secondary"><i class="fas fa-link me-1"></i><?= esc($r->sap_doc_no) ?></div><?php endif; ?>
-						</td>
+						<td><a href="<?= site_url('transfer-requests/show/' . $r->id) ?>" class="fw-semibold text-decoration-none" style="font-family:var(--bs-font-monospace)"><?= esc($r->doc_no) ?></a></td>
+						<td><?= $r->sap_doc_no ? '<span style="font-family:var(--bs-font-monospace)">' . esc($r->sap_doc_no) . '</span>' : '<span class="text-body-secondary">—</span>' ?></td>
 						<td><span class="badge text-bg-<?= $companyTheme[$r->company] ?? 'secondary' ?>"><?= esc($r->company) ?></span></td>
 						<td class="text-body-secondary"><?= esc($r->from_warehouse ?: '—') ?> <i class="fas fa-arrow-right mx-1 small"></i> <?= esc($r->to_warehouse ?: '—') ?></td>
 						<td><?= esc($r->posting_date ?: '—') ?></td>
