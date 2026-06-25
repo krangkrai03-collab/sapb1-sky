@@ -46,6 +46,11 @@
 						<input type="text" name="dashboard_note" class="form-control" value="<?= esc(old('dashboard_note', branding('dashboardNote'))) ?>">
 						<small class="text-body-secondary"><?= lang('App.dashboardNoteHint') ?></small>
 					</div>
+					<div class="mb-3">
+						<label class="form-label"><?= lang('App.sessionTimeout') ?></label>
+						<input type="number" name="session_timeout" class="form-control" style="max-width:240px" min="1" max="10080" value="<?= esc(old('session_timeout', branding('sessionTimeout', '120'))) ?>">
+						<small class="text-body-secondary"><?= lang('App.sessionTimeoutHint') ?></small>
+					</div>
 
 					<hr>
 					<h5 class="mb-3"><i class="fas fa-palette me-1"></i> <?= lang('App.themeTitle') ?></h5>

@@ -31,6 +31,9 @@ class Branding extends BaseConfig
     public string $apiKeySky  = '';
     public string $apiKeyJojo = '';
 
+    // Session idle timeout in minutes (auto-logout when no activity)
+    public string $sessionTimeout = '120';
+
     // Theme
     public string $themeColor        = 'primary'; // AdminLTE accent
     public string $themeSidebar      = 'dark';    // dark | light

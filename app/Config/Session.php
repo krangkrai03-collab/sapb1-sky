@@ -4,10 +4,27 @@ namespace Config;
 
 use CodeIgniter\Config\BaseConfig;
 use CodeIgniter\Session\Handlers\BaseHandler;
+use CodeIgniter\Session\Handlers\DatabaseHandler;
 use CodeIgniter\Session\Handlers\FileHandler;
 
 class Session extends BaseConfig
 {
+    public function __construct()
+    {
+        parent::__construct();
+
+        // Session timeout is configurable from System Settings (minutes).
+        // Guarded so it never breaks early boot / migrations.
+        try {
+            $minutes = (int) (setting('Branding.sessionTimeout') ?: config('Branding')->sessionTimeout);
+            if ($minutes > 0) {
+                $this->expiration = $minutes * 60;
+            }
+        } catch (\Throwable $e) {
+            // keep the default expiration
+        }
+    }
+
     /**
      * --------------------------------------------------------------------------
      * Session Driver
@@ -22,7 +39,7 @@ class Session extends BaseConfig
      *
      * @var class-string<BaseHandler>
      */
-    public string $driver = FileHandler::class;
+    public string $driver = DatabaseHandler::class;
 
     /**
      * --------------------------------------------------------------------------
@@ -58,7 +75,7 @@ class Session extends BaseConfig
      *
      * IMPORTANT: You are REQUIRED to set a valid save path!
      */
-    public string $savePath = WRITEPATH . 'session';
+    public string $savePath = 'ci_sessions';
 
     /**
      * --------------------------------------------------------------------------

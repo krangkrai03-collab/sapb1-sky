@@ -148,6 +148,8 @@ return [
     'apiKeySky'      => 'API Key (SKY)',
     'apiKeyJojo'     => 'API Key (Jojo)',
     'apiKeyPlaceholder' => 'คีย์สำหรับยืนยันตัวตนกับ SAP',
+    'sessionTimeout'    => 'หมดเวลา Session (นาที)',
+    'sessionTimeoutHint'=> 'ออกจากระบบอัตโนมัติเมื่อไม่มีการใช้งานครบตามเวลา (เช่น 120 = 2 ชม.)',
     'endpointSection'=> 'Endpoint ย่อย (ต่อบริษัท)',
     'endpointHint'   => 'กำหนด path ย่อยของแต่ละการทำงาน เช่น ItemMaster → /item',
     'endpointName'   => 'ชื่อการทำงาน',

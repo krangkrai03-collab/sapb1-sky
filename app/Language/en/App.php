@@ -148,6 +148,8 @@ return [
     'apiKeySky'      => 'API Key (SKY)',
     'apiKeyJojo'     => 'API Key (Jojo)',
     'apiKeyPlaceholder' => 'Key used to authenticate with SAP',
+    'sessionTimeout'    => 'Session timeout (minutes)',
+    'sessionTimeoutHint'=> 'Auto-logout after this many minutes of inactivity (e.g. 120 = 2h)',
     'endpointSection'=> 'Sub-endpoints (per company)',
     'endpointHint'   => 'Define a sub-path per function, e.g. ItemMaster → /item',
     'endpointName'   => 'Function name',

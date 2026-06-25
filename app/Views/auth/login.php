@@ -37,7 +37,7 @@
 					<input type="password" name="password" class="form-control" placeholder="<?= esc(lang('App.passwordPlaceholder'), 'attr') ?>" required>
 					<span class="input-group-text"><i class="fas fa-lock"></i></span>
 				</div>
-				<?php if (setting('Auth.allowRemembering')): ?>
+				<?php if (config('Auth')->sessionConfig['allowRemembering'] ?? false): ?>
 				<div class="form-check mb-3">
 					<input type="checkbox" class="form-check-input" name="remember" id="remember" <?= old('remember') ? 'checked' : '' ?>>
 					<label class="form-check-label" for="remember"><?= lang('App.rememberMe') ?></label>

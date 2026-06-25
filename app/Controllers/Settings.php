@@ -37,6 +37,7 @@ class Settings extends BaseController
             'theme_sidebar' => ['label' => lang('App.sidebarStyle'), 'rules' => 'permit_empty|in_list[dark,light]'],
             'theme_sidebar_color' => ['label' => lang('App.sidebarColor'), 'rules' => "permit_empty|in_list[{$colors}]"],
             'locale'        => ['label' => lang('App.defaultLang'), 'rules' => 'permit_empty|in_list[th,en]'],
+            'session_timeout' => ['label' => lang('App.sessionTimeout'), 'rules' => 'permit_empty|is_natural_no_zero|less_than_equal_to[10080]'],
             'api_url_sky'   => ['label' => lang('App.apiUrlSky'), 'rules' => 'permit_empty|valid_url_strict|max_length[255]'],
             'api_url_jojo'  => ['label' => lang('App.apiUrlJojo'), 'rules' => 'permit_empty|valid_url_strict|max_length[255]'],
             'api_key_sky'   => ['label' => lang('App.apiKeySky'), 'rules' => 'permit_empty|max_length[255]'],
@@ -53,6 +54,7 @@ class Settings extends BaseController
 
         $settings = service('settings');
         $settings->set('Branding.locale', $this->request->getPost('locale') ?: 'th');
+        $settings->set('Branding.sessionTimeout', (string) ((int) $this->request->getPost('session_timeout') ?: 120));
         $settings->set('Branding.appName', (string) $this->request->getPost('app_name'));
         $settings->set('Branding.logoIcon', $this->request->getPost('logo_icon') ?: 'fas fa-shield-halved');
         $settings->set('Branding.footer', (string) $this->request->getPost('footer'));
