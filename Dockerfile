@@ -8,7 +8,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # --- Apache: single MPM (prefork, required by mod_php), docroot -> public/, rewrite ---
-RUN a2dismod mpm_event mpm_worker 2>/dev/null || true; a2enmod mpm_prefork rewrite
+# Remove every enabled MPM symlink first, then enable exactly prefork — this
+# guarantees a single MPM (fixes "AH00534: More than one MPM loaded").
+RUN rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf \
+    && a2enmod mpm_prefork rewrite
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
     && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf \
