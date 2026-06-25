@@ -238,6 +238,8 @@ return [
     'itemCode'         => 'รหัสสินค้า',
     'itemName'         => 'ชื่อสินค้า',
     'defaultWarehouse' => 'คลังเริ่มต้น',
+    'uoms'             => 'หน่วยนับ (UoM)',
+    'uomInventory'     => 'หน่วยฐาน (สต๊อก)',
     'noItems'          => 'ยังไม่มีสินค้า',
 
     // errors

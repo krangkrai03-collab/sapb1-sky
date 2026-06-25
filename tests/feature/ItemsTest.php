@@ -66,6 +66,43 @@ final class ItemsTest extends CIUnitTestCase
         $result->assertSee('Widget');
     }
 
+    public function testItemUomsShowOnPage(): void
+    {
+        $items = new ItemModel();
+        $items->insert([
+            'company'           => 'SKY',
+            'item_code'         => 'ITM-UOM',
+            'item_name'         => 'Multi UoM Widget',
+            'default_warehouse' => 'WH1',
+            'inventory_uom'     => 'PCS',
+        ]);
+        $itemId = (int) $items->getInsertID();
+
+        $uoms = new \App\Models\ItemUomModel();
+        $uoms->insert(['item_id' => $itemId, 'uom_entry' => 9, 'uom_code' => 'PCS', 'base_qty' => 1, 'base_uom' => 'PCS', 'is_inventory_uom' => 1]);
+        $uoms->insert(['item_id' => $itemId, 'uom_entry' => 62, 'uom_code' => '24 PCS/CTN', 'base_qty' => 24, 'base_uom' => 'PCS', 'is_inventory_uom' => 0]);
+
+        $admin  = $this->makeUser('admin', 'superadmin');
+        $result = $this->actingAs($admin)->get('items');
+        $result->assertSee('ITM-UOM');
+        $result->assertSee('PCS');
+        $result->assertSee('24 PCS/CTN');
+    }
+
+    public function testDeletingItemCascadesUoms(): void
+    {
+        $items = new ItemModel();
+        $items->insert(['company' => 'SKY', 'item_code' => 'ITM-DEL', 'item_name' => 'Doomed']);
+        $itemId = (int) $items->getInsertID();
+
+        $uoms = new \App\Models\ItemUomModel();
+        $uoms->insert(['item_id' => $itemId, 'uom_entry' => 9, 'uom_code' => 'PCS', 'base_qty' => 1, 'base_uom' => 'PCS', 'is_inventory_uom' => 1]);
+        $this->assertSame(1, $uoms->where('item_id', $itemId)->countAllResults());
+
+        $items->delete($itemId);
+        $this->assertSame(0, (new \App\Models\ItemUomModel())->where('item_id', $itemId)->countAllResults());
+    }
+
     public function testSyncWithoutApiUrlRedirects(): void
     {
         $admin = $this->makeUser('admin', 'superadmin');

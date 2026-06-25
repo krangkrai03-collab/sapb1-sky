@@ -238,6 +238,8 @@ return [
     'itemCode'         => 'Item code',
     'itemName'         => 'Item name',
     'defaultWarehouse' => 'Default warehouse',
+    'uoms'             => 'Units (UoM)',
+    'uomInventory'     => 'Inventory UoM',
     'noItems'          => 'No items yet',
 
     // errors

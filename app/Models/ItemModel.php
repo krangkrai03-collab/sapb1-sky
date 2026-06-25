@@ -10,5 +10,5 @@ class ItemModel extends Model
     protected $primaryKey    = 'id';
     protected $returnType    = 'object';
     protected $useTimestamps = false;
-    protected $allowedFields = ['company', 'item_code', 'item_name', 'default_warehouse', 'created_at'];
+    protected $allowedFields = ['company', 'item_code', 'item_name', 'default_warehouse', 'inventory_uom', 'created_at'];
 }

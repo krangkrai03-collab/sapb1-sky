@@ -18,16 +18,25 @@ $companyTheme = ['SKY' => 'info', 'JOJO' => 'warning'];
 								<th><?= lang('App.itemCode') ?></th>
 								<th><?= lang('App.itemName') ?></th>
 								<th><?= lang('App.defaultWarehouse') ?></th>
+								<th><?= lang('App.uoms') ?></th>
 							</tr>
 						</thead>
 						<tbody>
 							<?php if (empty($list)): ?>
-								<tr><td colspan="3" class="text-center text-body-secondary py-3"><?= lang('App.noItems') ?></td></tr>
+								<tr><td colspan="4" class="text-center text-body-secondary py-3"><?= lang('App.noItems') ?></td></tr>
 							<?php else: foreach ($list as $it): ?>
 								<tr>
 									<td><code><?= esc($it->item_code) ?></code></td>
 									<td><?= esc($it->item_name) ?></td>
 									<td><?= $it->default_warehouse ? esc($it->default_warehouse) : '<span class="text-body-secondary">—</span>' ?></td>
+									<td>
+										<?php if (empty($it->uoms)): ?>
+											<span class="text-body-secondary">—</span>
+										<?php else: foreach ($it->uoms as $u): $qty = rtrim(rtrim((string) $u->base_qty, '0'), '.'); ?>
+											<span class="badge <?= $u->is_inventory_uom ? 'text-bg-primary' : 'text-bg-light border' ?> me-1"
+												title="<?= esc(($u->is_inventory_uom ? lang('App.uomInventory') . ' · ' : '') . $qty . ' ' . $u->base_uom, 'attr') ?>"><?= esc($u->uom_code) ?><?php if (! $u->is_inventory_uom && (float) $u->base_qty != 1.0): ?> <span class="opacity-75">×<?= esc($qty) ?></span><?php endif; ?></span>
+										<?php endforeach; endif; ?>
+									</td>
 								</tr>
 							<?php endforeach; endif; ?>
 						</tbody>

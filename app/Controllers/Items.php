@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\ItemModel;
+use App\Models\ItemUomModel;
 use App\Models\ApiEndpointModel;
 
 class Items extends BaseController
@@ -14,11 +15,13 @@ class Items extends BaseController
     private const SYNC_ENDPOINTS = ['ItemMaster', 'Item', 'Items'];
 
     private ItemModel $items;
+    private ItemUomModel $uoms;
     private ApiEndpointModel $endpoints;
 
     public function __construct()
     {
         $this->items     = new ItemModel();
+        $this->uoms      = new ItemUomModel();
         $this->endpoints = new ApiEndpointModel();
     }
 
@@ -26,10 +29,28 @@ class Items extends BaseController
     {
         $byCompany = [];
         foreach (self::COMPANIES as $company) {
-            $byCompany[$company] = $this->items
+            $list = $this->items
                 ->where('company', $company)
                 ->orderBy('item_code', 'asc')
                 ->findAll();
+
+            // Attach each item's units of measure (inventory UoM first).
+            $ids = array_map(static fn ($it) => $it->id, $list);
+            $byItem = [];
+            if ($ids !== []) {
+                $rows = $this->uoms->whereIn('item_id', $ids)
+                    ->orderBy('is_inventory_uom', 'DESC')
+                    ->orderBy('base_qty', 'ASC')
+                    ->findAll();
+                foreach ($rows as $u) {
+                    $byItem[$u->item_id][] = $u;
+                }
+            }
+            foreach ($list as $it) {
+                $it->uoms = $byItem[$it->id] ?? [];
+            }
+
+            $byCompany[$company] = $list;
         }
 
         return $this->render('items/index', [
@@ -90,7 +111,7 @@ class Items extends BaseController
                 }
                 $code = trim((string) ($row['item_code'] ?? $row['ItemCode'] ?? $row['itemCode'] ?? $row['code'] ?? ''));
                 $name = trim((string) ($row['item_name'] ?? $row['ItemName'] ?? $row['itemName'] ?? $row['name'] ?? ''));
-                $wh   = trim((string) ($row['default_warehouse'] ?? $row['DefaultWarehouse'] ?? $row['DfltWH'] ?? $row['defaultWarehouse'] ?? $row['warehouse'] ?? ''));
+                $wh   = trim((string) ($row['default_warehouse'] ?? $row['DefaultWhs'] ?? $row['DefaultWarehouse'] ?? $row['DfltWH'] ?? $row['defaultWarehouse'] ?? $row['warehouse'] ?? ''));
                 if ($code === '') {
                     continue;
                 }
@@ -105,16 +126,23 @@ class Items extends BaseController
                         'default_warehouse' => $wh,
                         'created_at'        => date('Y-m-d H:i:s'),
                     ]);
+                    $itemId = (int) $this->items->getInsertID();
                     $added++;
                 } else {
-                    $this->items->update($existing->id, [
+                    $itemId = (int) $existing->id;
+                    $this->items->update($itemId, [
                         'item_name'         => $name,
                         'default_warehouse' => $wh,
                     ]);
                 }
+
+                // Replace the item's units of measure and cache its base UoM.
+                $inventoryUom = $this->syncUoms($itemId, $row['Uoms'] ?? $row['uoms'] ?? $row['UoMs'] ?? null);
+                $this->items->update($itemId, ['inventory_uom' => $inventoryUom]);
             }
 
             if ($seen !== []) {
+                // Children (item_uoms) are removed via the ON DELETE CASCADE FK.
                 $this->items->where('company', $company)->whereNotIn('item_code', $seen)->delete();
             }
 
@@ -124,5 +152,46 @@ class Items extends BaseController
             log_activity('item.sync.fail', "ซิงก์ Item Master จาก SAP ไม่สำเร็จ: [{$company}] — " . $e->getMessage());
             return redirect()->to('items')->with('error', lang('App.syncFailed', [$company]));
         }
+    }
+
+    /**
+     * Replace an item's units of measure (SAP Uoms[]) and return the code of
+     * its inventory/base UoM (the row with IsInventoryUom = true), or null.
+     */
+    private function syncUoms(int $itemId, $rawUoms): ?string
+    {
+        $this->uoms->where('item_id', $itemId)->delete();
+        if (! is_array($rawUoms)) {
+            return null;
+        }
+
+        $now          = date('Y-m-d H:i:s');
+        $inventoryUom = null;
+        foreach ($rawUoms as $u) {
+            if (! is_array($u)) {
+                continue;
+            }
+            $uomCode = trim((string) ($u['UomCode'] ?? $u['uom_code'] ?? $u['Code'] ?? ''));
+            if ($uomCode === '') {
+                continue;
+            }
+            $isInventory = (bool) ($u['IsInventoryUom'] ?? $u['is_inventory_uom'] ?? false);
+
+            $this->uoms->insert([
+                'item_id'          => $itemId,
+                'uom_entry'        => (int) ($u['UomEntry'] ?? $u['uom_entry'] ?? 0),
+                'uom_code'         => $uomCode,
+                'base_qty'         => (float) ($u['BaseQty'] ?? $u['base_qty'] ?? 1),
+                'base_uom'         => trim((string) ($u['BaseUom'] ?? $u['base_uom'] ?? '')),
+                'is_inventory_uom' => $isInventory ? 1 : 0,
+                'created_at'       => $now,
+            ]);
+
+            if ($isInventory && $inventoryUom === null) {
+                $inventoryUom = $uomCode;
+            }
+        }
+
+        return $inventoryUom;
     }
 }
