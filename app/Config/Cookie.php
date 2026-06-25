@@ -109,8 +109,12 @@ class Cookie extends BaseConfig
     {
         parent::__construct();
 
-        // Only send cookies over HTTPS in production (prevents leakage / MITM).
-        if (ENVIRONMENT === 'production') {
+        // Secure cookies only when actually served over HTTPS — otherwise the
+        // browser drops them and sessions won't persist (HTTP deployments).
+        $base = (string) getenv('APP_BASE_URL');
+        if ($base !== '') {
+            $this->secure = str_starts_with(strtolower($base), 'https://');
+        } elseif (ENVIRONMENT === 'production') {
             $this->secure = true;
         }
     }
