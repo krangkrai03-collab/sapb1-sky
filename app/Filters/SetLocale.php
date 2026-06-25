@@ -8,14 +8,14 @@ use CodeIgniter\HTTP\ResponseInterface;
 
 /**
  * Applies the active UI language for every request.
- * Priority: per-session choice (navbar toggle) → global default (Settings) → 'th'.
+ * Priority: per-session choice (navbar toggle) → global default (Settings) → 'en'.
  */
 class SetLocale implements FilterInterface
 {
     public function before(RequestInterface $request, $arguments = null)
     {
         $supported = config('App')->supportedLocales;
-        $default   = setting('Branding.locale') ?: 'th';
+        $default   = setting('Branding.locale') ?: config('Branding')->locale ?: 'en';
 
         // Per-user preference (remembered) → global default; guests → session → default.
         if (auth()->loggedIn()) {
@@ -24,7 +24,7 @@ class SetLocale implements FilterInterface
             $locale = session('locale') ?: $default;
         }
         if (! in_array($locale, $supported, true)) {
-            $locale = 'th';
+            $locale = $default;
         }
 
         service('request')->setLocale($locale);

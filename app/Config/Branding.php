@@ -12,7 +12,7 @@ use CodeIgniter\Config\BaseConfig;
  */
 class Branding extends BaseConfig
 {
-    public string $locale   = 'th'; // ภาษาเริ่มต้น (th | en)
+    public string $locale   = 'en'; // ภาษาเริ่มต้น (th | en)
     public string $appName  = 'Admin Portal';
     public string $logoIcon = 'fas fa-shield-halved';
     public string $footer   = 'สร้างด้วย CodeIgniter 4 + Shield + AdminLTE';
