@@ -21,9 +21,22 @@ class BusinessPartners extends BaseController
 
     public function index()
     {
+        // Optional search over BP code / name / ship-to (paginated, 20 per page).
+        $q = trim((string) $this->request->getGet('q'));
+        $this->partners->orderBy('bp_code', 'asc');
+        if ($q !== '') {
+            $this->partners->groupStart()
+                ->like('bp_code', $q)
+                ->orLike('bp_name', $q)
+                ->orLike('ship_to', $q)
+                ->groupEnd();
+        }
+
         return $this->render('business_partners/index', [
             'title'    => lang('App.businessPartners'),
-            'partners' => $this->partners->orderBy('bp_code', 'asc')->findAll(),
+            'partners' => $this->partners->paginate(20),
+            'pager'    => $this->partners->pager,
+            'q'        => $q,
         ]);
     }
 

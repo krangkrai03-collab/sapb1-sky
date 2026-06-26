@@ -1,7 +1,15 @@
+<?php $total = $pager->getDetails()['total'] ?? count($items); ?>
 <div class="card">
-	<div class="card-header d-flex justify-content-between align-items-center">
+	<div class="card-header d-flex flex-wrap gap-2 align-items-center">
 		<h3 class="card-title mb-0"><i class="fas fa-boxes-stacked me-1"></i> <?= lang('App.itemMaster') ?></h3>
-		<span class="badge text-bg-light"><?= count($items) ?></span>
+		<span class="badge text-bg-light"><?= (int) $total ?></span>
+		<form method="get" action="<?= site_url('items') ?>" class="ms-auto" id="itemSearchForm" role="search">
+			<div class="input-group input-group-sm" style="width:280px;max-width:60vw">
+				<span class="input-group-text"><i class="fas fa-search"></i></span>
+				<input type="search" name="q" id="itemSearch" class="form-control" value="<?= esc($q, 'attr') ?>"
+					placeholder="<?= esc(lang('App.itemSearchPlaceholder'), 'attr') ?>" autocomplete="off" autofocus>
+			</div>
+		</form>
 	</div>
 	<div class="table-responsive">
 		<table class="table table-striped table-sm mb-0 align-middle">
@@ -15,7 +23,7 @@
 			</thead>
 			<tbody>
 				<?php if (empty($items)): ?>
-					<tr><td colspan="4" class="text-center text-body-secondary py-3"><?= lang('App.noItems') ?></td></tr>
+					<tr><td colspan="4" class="text-center text-body-secondary py-3"><?= $q !== '' ? lang('App.noSearchResults') : lang('App.noItems') ?></td></tr>
 				<?php else: foreach ($items as $it): ?>
 					<tr>
 						<td><code><?= esc($it->item_code) ?></code></td>
@@ -34,6 +42,11 @@
 			</tbody>
 		</table>
 	</div>
+	<?php if (isset($pager) && $pager->getPageCount() > 1): ?>
+		<div class="card-body border-top py-2 d-flex justify-content-center">
+			<?= $pager->links('default', 'bootstrap5') ?>
+		</div>
+	<?php endif; ?>
 	<div class="card-footer">
 		<form action="<?= site_url('items/sync') ?>" method="post" class="d-grid">
 			<?= csrf_field() ?>
@@ -41,3 +54,20 @@
 		</form>
 	</div>
 </div>
+
+<script>
+	(function () {
+		var input = document.getElementById('itemSearch');
+		var form  = document.getElementById('itemSearchForm');
+		if (! input || ! form) { return; }
+		// Keep the caret at the end after the page reloads mid-typing.
+		var len = input.value.length;
+		input.setSelectionRange(len, len);
+		// Type-to-search: auto-submit shortly after the user stops typing.
+		var timer;
+		input.addEventListener('input', function () {
+			clearTimeout(timer);
+			timer = setTimeout(function () { form.submit(); }, 350);
+		});
+	})();
+</script>

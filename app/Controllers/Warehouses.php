@@ -21,9 +21,21 @@ class Warehouses extends BaseController
 
     public function index()
     {
+        // Optional search over code / name (paginated, 20 per page).
+        $q = trim((string) $this->request->getGet('q'));
+        $this->warehouses->orderBy('code', 'asc');
+        if ($q !== '') {
+            $this->warehouses->groupStart()
+                ->like('code', $q)
+                ->orLike('name', $q)
+                ->groupEnd();
+        }
+
         return $this->render('warehouses/index', [
             'title'      => lang('App.warehouses'),
-            'warehouses' => $this->warehouses->orderBy('code', 'asc')->findAll(),
+            'warehouses' => $this->warehouses->paginate(20),
+            'pager'      => $this->warehouses->pager,
+            'q'          => $q,
         ]);
     }
 

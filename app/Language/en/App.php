@@ -215,6 +215,7 @@ return [
     'bindWarehouse'    => 'Bind warehouses',
     'bindWarehouseHint'=> 'Hold Ctrl/Cmd to select multiple.',
     'noWarehouses'     => 'No warehouses yet',
+    'warehouseSearchPlaceholder' => 'Search code or name…',
     'syncFromSap'      => 'Sync Data From SAP',
     'syncNoUrl'        => 'Web API URL is not set (configure it in System Settings)',
     'syncNoEndpoint'   => 'The "{0}" endpoint is not configured (add it in System Settings)',
@@ -230,6 +231,7 @@ return [
     'bpName'              => 'BP Name',
     'bpShipTo'            => 'Ship To',
     'noBusinessPartners' => 'No business partners yet',
+    'bpSearchPlaceholder' => 'Search code, name or ship-to…',
 
     // item master
     'itemMaster'       => 'Item Master',
@@ -238,6 +240,8 @@ return [
     'defaultWarehouse' => 'Default warehouse',
     'uoms'             => 'Units (UoM)',
     'uomInventory'     => 'Inventory UoM',
+    'itemSearchPlaceholder' => 'Search code or name…',
+    'noSearchResults'  => 'No results match your search',
     'noItems'          => 'No items yet',
 
     // errors

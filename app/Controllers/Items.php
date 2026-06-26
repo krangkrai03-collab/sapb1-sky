@@ -24,9 +24,18 @@ class Items extends BaseController
 
     public function index()
     {
-        $list = $this->items->orderBy('item_code', 'asc')->findAll();
+        // Optional search over item code / name (paginated, 20 per page).
+        $q = trim((string) $this->request->getGet('q'));
+        $this->items->orderBy('item_code', 'asc');
+        if ($q !== '') {
+            $this->items->groupStart()
+                ->like('item_code', $q)
+                ->orLike('item_name', $q)
+                ->groupEnd();
+        }
+        $list = $this->items->paginate(20);
 
-        // Attach each item's units of measure (inventory UoM first).
+        // Attach each item's units of measure (inventory UoM first) — current page only.
         $ids    = array_map(static fn ($it) => $it->id, $list);
         $byItem = [];
         if ($ids !== []) {
@@ -45,6 +54,8 @@ class Items extends BaseController
         return $this->render('items/index', [
             'title' => lang('App.itemMaster'),
             'items' => $list,
+            'pager' => $this->items->pager,
+            'q'     => $q,
         ]);
     }
 

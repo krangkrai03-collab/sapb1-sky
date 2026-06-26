@@ -215,6 +215,7 @@ return [
     'bindWarehouse'    => 'ผูกคลังสินค้า',
     'bindWarehouseHint'=> 'กด Ctrl/Cmd ค้างเพื่อเลือกหลายคลัง',
     'noWarehouses'     => 'ยังไม่มีคลังสินค้า',
+    'warehouseSearchPlaceholder' => 'ค้นหารหัส/ชื่อคลัง…',
     'syncFromSap'      => 'Sync Data From SAP',
     'syncNoUrl'        => 'ยังไม่ได้ตั้งค่า URL Web API (ตั้งที่หน้าตั้งค่าระบบ)',
     'syncNoEndpoint'   => 'ยังไม่ได้ตั้งค่า endpoint "{0}" (เพิ่มที่หน้าตั้งค่าระบบ)',
@@ -230,6 +231,7 @@ return [
     'bpName'              => 'ชื่อคู่ค้า',
     'bpShipTo'            => 'จัดส่งไปที่',
     'noBusinessPartners' => 'ยังไม่มีคู่ค้า',
+    'bpSearchPlaceholder' => 'ค้นหารหัส/ชื่อ/จัดส่ง…',
 
     // item master
     'itemMaster'       => 'Item Master',
@@ -238,6 +240,8 @@ return [
     'defaultWarehouse' => 'คลังเริ่มต้น',
     'uoms'             => 'หน่วยนับ (UoM)',
     'uomInventory'     => 'หน่วยฐาน (สต๊อก)',
+    'itemSearchPlaceholder' => 'ค้นหารหัส/ชื่อสินค้า…',
+    'noSearchResults'  => 'ไม่พบรายการที่ค้นหา',
     'noItems'          => 'ยังไม่มีสินค้า',
 
     // errors
