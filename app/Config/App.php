@@ -180,7 +180,17 @@ class App extends BaseConfig
      *
      * @var array<string, string>
      */
-    public array $proxyIPs = [];
+    public array $proxyIPs = [
+        // Behind a reverse proxy (Traefik/Coolify, nginx, etc.) the app only
+        // ever sees the proxy's private IP. Trust private-range proxies and
+        // read the real client IP from X-Forwarded-For so activity logs and
+        // Shield's auth logs record the public visitor IP, not 10.x.
+        '10.0.0.0/8'     => 'X-Forwarded-For',
+        '172.16.0.0/12'  => 'X-Forwarded-For',
+        '192.168.0.0/16' => 'X-Forwarded-For',
+        '127.0.0.1'      => 'X-Forwarded-For',
+        '::1'            => 'X-Forwarded-For',
+    ];
 
     /**
      * --------------------------------------------------------------------------
