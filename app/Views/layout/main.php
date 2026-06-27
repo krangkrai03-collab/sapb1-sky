@@ -9,7 +9,23 @@
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap">
-	<style> body, .app-content { font-family: 'Sarabun', sans-serif; } </style>
+	<style>
+		body, .app-content { font-family: 'Sarabun', sans-serif; }
+		/* Sidebar — grouped sections + rounded active pills */
+		.app-sidebar .sidebar-menu { padding: 6px 10px 14px; }
+		.app-sidebar .sidebar-menu > .nav-item { margin-bottom: 2px; }
+		.app-sidebar .nav-header {
+			text-transform: none; font-size: 11px; letter-spacing: .03em; font-weight: 600;
+			padding: 14px 12px 5px; color: var(--bs-secondary-color);
+		}
+		.app-sidebar .sidebar-menu .nav-link { border-radius: 8px; padding: 9px 12px; margin: 0; }
+		.app-sidebar .sidebar-menu .nav-icon { font-size: 16px; }
+		.app-sidebar .sidebar-menu .nav-link > p { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+		.app-sidebar .nav-treeview { padding-left: 8px; margin-top: 2px; }
+		.app-sidebar .nav-treeview .nav-link { padding-top: 7px; padding-bottom: 7px; }
+		.app-sidebar .brand-link { display: flex; align-items: center; gap: 8px; }
+		.app-sidebar .sidebar-brand { padding: 4px 6px; }
+	</style>
 </head>
 <body class="layout-fixed sidebar-mini sidebar-expand-lg bg-body-tertiary">
 <div class="app-wrapper">
@@ -50,14 +66,15 @@
 
 	<aside class="app-sidebar <?= sidebar_bg_class() ?> shadow" data-bs-theme="<?= sidebar_theme() ?>">
 		<div class="sidebar-brand">
-			<a href="<?= site_url('dashboard') ?>" class="brand-link text-center">
-				<i class="<?= esc(branding('logoIcon', 'fas fa-shield-halved'), 'attr') ?> ms-2"></i>
+			<a href="<?= site_url('dashboard') ?>" class="brand-link">
+				<i class="<?= esc(branding('logoIcon', 'fas fa-shield-halved'), 'attr') ?>"></i>
 				<span class="brand-text fw-light"><?= esc(app_name()) ?></span>
 			</a>
 		</div>
 		<div class="sidebar-wrapper">
 			<nav class="mt-2">
 				<ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu" data-accordion="false">
+					<li class="nav-header"><?= lang('App.navMain') ?></li>
 					<li class="nav-item">
 						<a href="<?= site_url('dashboard') ?>" class="nav-link <?= active_menu('dashboard') ?>"><i class="nav-icon fas fa-tachometer-alt"></i><p><?= lang('App.dashboard') ?></p></a>
 					</li>
@@ -78,20 +95,21 @@
 						</ul>
 					</li>
 					<?php endif; ?>
+
 					<?php if (user_can('users.view') || user_can('roles.view') || user_can('logs.view') || user_can('settings.manage')): ?>
-					<?php $adminOpen = active_menu('users') || active_menu('roles') || active_menu('logs') || active_menu('settings'); ?>
-					<li class="nav-item <?= $adminOpen ? 'menu-open' : '' ?>">
-						<a href="#" class="nav-link <?= $adminOpen ? 'active' : '' ?>">
-							<i class="nav-icon fas fa-screwdriver-wrench"></i>
-							<p><?= lang('App.administration') ?> <i class="nav-arrow fas fa-angle-right"></i></p>
-						</a>
-						<ul class="nav nav-treeview">
-							<?php if (user_can('users.view')): ?><li class="nav-item"><a href="<?= site_url('users') ?>" class="nav-link <?= active_menu('users') ?>"><i class="nav-icon fas fa-users"></i><p><?= lang('App.users') ?></p></a></li><?php endif; ?>
-							<?php if (user_can('roles.view')): ?><li class="nav-item"><a href="<?= site_url('roles') ?>" class="nav-link <?= active_menu('roles') ?>"><i class="nav-icon fas fa-user-shield"></i><p><?= lang('App.roles') ?></p></a></li><?php endif; ?>
-							<?php if (user_can('logs.view')): ?><li class="nav-item"><a href="<?= site_url('logs') ?>" class="nav-link <?= active_menu('logs') ?>"><i class="nav-icon fas fa-history"></i><p><?= lang('App.logs') ?></p></a></li><?php endif; ?>
-							<?php if (user_can('settings.manage')): ?><li class="nav-item"><a href="<?= site_url('settings') ?>" class="nav-link <?= active_menu('settings') ?>"><i class="nav-icon fas fa-cog"></i><p><?= lang('App.settings') ?></p></a></li><?php endif; ?>
-						</ul>
-					</li>
+					<li class="nav-header"><?= lang('App.administration') ?></li>
+					<?php if (user_can('users.view')): ?>
+					<li class="nav-item"><a href="<?= site_url('users') ?>" class="nav-link <?= active_menu('users') ?>"><i class="nav-icon fas fa-users"></i><p><?= lang('App.users') ?></p></a></li>
+					<?php endif; ?>
+					<?php if (user_can('roles.view')): ?>
+					<li class="nav-item"><a href="<?= site_url('roles') ?>" class="nav-link <?= active_menu('roles') ?>"><i class="nav-icon fas fa-user-shield"></i><p><?= lang('App.roles') ?></p></a></li>
+					<?php endif; ?>
+					<?php if (user_can('logs.view')): ?>
+					<li class="nav-item"><a href="<?= site_url('logs') ?>" class="nav-link <?= active_menu('logs') ?>"><i class="nav-icon fas fa-history"></i><p><?= lang('App.logs') ?></p></a></li>
+					<?php endif; ?>
+					<?php if (user_can('settings.manage')): ?>
+					<li class="nav-item"><a href="<?= site_url('settings') ?>" class="nav-link <?= active_menu('settings') ?>"><i class="nav-icon fas fa-cog"></i><p><?= lang('App.settings') ?></p></a></li>
+					<?php endif; ?>
 					<?php endif; ?>
 				</ul>
 			</nav>

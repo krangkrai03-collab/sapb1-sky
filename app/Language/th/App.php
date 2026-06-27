@@ -224,6 +224,7 @@ return [
     'syncFailed'       => 'ซิงก์จาก SAP ไม่สำเร็จ — ตรวจสอบ URL Web API/การเชื่อมต่อ',
 
     // business partner
+    'navMain'             => 'เมนูหลัก',
     'masterData'          => 'ข้อมูลหลัก (Master Data)',
     'administration'      => 'ผู้ดูแลระบบ (Administration)',
     'businessPartners'    => 'Business Partner',

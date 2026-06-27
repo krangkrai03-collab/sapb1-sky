@@ -224,6 +224,7 @@ return [
     'syncFailed'       => 'Sync from SAP failed — check the Web API URL/connection',
 
     // business partner
+    'navMain'             => 'Main',
     'masterData'          => 'Master Data',
     'administration'      => 'Administration',
     'businessPartners'    => 'Business Partner',
